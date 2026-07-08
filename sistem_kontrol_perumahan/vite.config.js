@@ -12,11 +12,6 @@ export default defineConfig({
                 'resources/js/app.jsx',
             ],
             refresh: true,
-            fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-            ],
         }),
 
         react(),
