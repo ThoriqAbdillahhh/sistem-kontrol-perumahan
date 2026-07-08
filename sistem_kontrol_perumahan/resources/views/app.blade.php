@@ -18,5 +18,7 @@
     </head>
     <body class="font-sans antialiased">
         @inertia
+
+        <P>tes dulu</P>
     </body>
 </html>
