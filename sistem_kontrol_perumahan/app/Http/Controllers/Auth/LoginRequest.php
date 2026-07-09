@@ -25,29 +25,27 @@ class LoginRequest extends FormRequest
     }
 
     public function authenticate(): void
-    {
-        $this->ensureIsNotRateLimited();
+        {
+            $this->ensureIsNotRateLimited();
 
-        $login = $this->input('login');
+            $login = $this->input('login');
 
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL)
-            ? 'email' 
-            : 'username';
+            $field = filter_var($login, FILTER_VALIDATE_EMAIL)
+                ? 'email'
+                : 'username';
 
-        if (! Auth::attempt([
-            $field => $login,
-            'password' => $this->input('password'),
-        ], $this->boolean('remember'))) {
+            $result = Auth::attempt([
+                $field => $login,
+                'password' => $this->input('password'),
+            ]);
 
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'login' => __('Username/Email atau password salah.'),
+            dd([
+                'result' => $result,
+                'field' => $field,
+                'login' => $login,
+                'user' => Auth::user(),
             ]);
         }
-
-        RateLimiter::clear($this->throttleKey());
-    }
 
     public function ensureIsNotRateLimited(): void
     {
