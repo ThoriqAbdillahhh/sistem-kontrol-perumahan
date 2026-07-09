@@ -61,7 +61,7 @@ export default function Sidebar() {
         {
             title: "Master Material",
             route: "material.index",
-            href: "#",
+            href: route("material.index"),
             icon: Database,
             roles: ["Super Admin", "Admin"],
         },

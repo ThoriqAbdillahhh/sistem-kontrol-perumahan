@@ -24,10 +24,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // TODO: tambahkan middleware role:Super Admin|Admin setelah middleware role dari Orang A jadi
     Route::resource('material', MaterialController::class)
         ->only(['index', 'store', 'update', 'destroy']);
+});
+
+Route::middleware(['auth', 'role:Super Admin|Admin'])->group(function () {
+    Route::resource('material', MaterialController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->parameters(['material' => 'material']);
 });
 
 require __DIR__.'/auth.php';
