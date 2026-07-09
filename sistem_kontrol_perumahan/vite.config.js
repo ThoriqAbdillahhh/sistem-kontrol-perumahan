@@ -18,4 +18,12 @@ export default defineConfig({
 
         tailwindcss(),
     ],
+
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, 'resources/js'),
+        },
+        extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
+    },
+
 });

@@ -1,93 +1,141 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import {
-    HomeIcon,
-    BuildingOffice2Icon,
-    CubeIcon,
-    ClipboardDocumentListIcon,
-    ChartBarIcon,
-    UsersIcon,
-} from "@heroicons/react/24/outline";
+    Home,
+    Building2,
+    Boxes,
+    TrendingUp,
+    ClipboardList,
+    Database,
+    Users,
+    LogOut,
+} from "lucide-react";
+import RoleBadge from "@/Components/RoleBadge";
 
-export default function Sidebar({ auth }) {
+export default function Sidebar() {
+    const { auth } = usePage().props;
+    const currentUrl = usePage().url;
+
+    const role =
+        auth.user.roles?.length > 0
+            ? auth.user.roles[0].name
+            : "";
+
+    const menus = [
+        {
+            title: "Dashboard",
+            href: route("dashboard"),
+            icon: Home,
+            roles: ["Super Admin", "Admin", "Owner"],
+        },
+        {
+            title: "Mengelola Unit",
+            href: "#",
+            icon: Building2,
+            roles: ["Super Admin", "Admin"],
+        },
+        {
+            title: "Log Gudang",
+            href: "#",
+            icon: Boxes,
+            roles: ["Super Admin", "Admin"],
+        },
+        {
+            title: "Update Progress",
+            href: "#",
+            icon: TrendingUp,
+            roles: ["Super Admin", "Admin"],
+        },
+        {
+            title: "Standar Progres",
+            href: "#",
+            icon: ClipboardList,
+            roles: ["Super Admin", "Admin"],
+        },
+        {
+            title: "Master Material",
+            href: "#",
+            icon: Database,
+            roles: ["Super Admin", "Admin"],
+        },
+        {
+            title: "User & Role",
+            href: "#",
+            icon: Users,
+            roles: ["Super Admin"],
+        },
+    ];
+
+    const initials = auth.user.name
+        .split(" ")
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+
     return (
-        <aside className="fixed left-0 top-0 h-screen w-72 bg-[#0F172A] text-white">
+        <aside className="flex h-screen w-72 flex-col bg-sidebar text-sidebar-foreground">
+            <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
+                <div className="grid size-10 place-items-center rounded-xl bg-primary text-white shadow-md">
+                    <Building2 size={20} />
+                </div>
+                <div>
+                    <p className="text-sm font-bold text-white">EstateControl</p>
+                    <p className="text-[11px] text-sidebar-foreground/50">Monitoring Perumahan</p>
+                </div>
+            </div>
 
-            <div className="border-b border-slate-700 p-6">
-
-                <h1 className="text-2xl font-bold">
-                    EstateControl
-                </h1>
-
-                <p className="text-cyan-400">
-                    ERP
+            <nav className="flex-1 space-y-0.5 overflow-y-auto p-3 text-sm">
+                <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40">
+                    Menu
                 </p>
 
-            </div>
+                {menus
+                    .filter((menu) => menu.roles.includes(role))
+                    .map((menu) => {
+                        const Icon = menu.icon;
+                        const isActive = currentUrl === menu.href;
 
-            <nav className="space-y-2 p-5">
-
-                <Link
-                    href="/dashboard"
-                    className="flex items-center gap-3 rounded-xl p-3 hover:bg-cyan-700"
-                >
-                    <HomeIcon className="h-6 w-6" />
-                    Dashboard
-                </Link>
-
-                <Link
-                    href="/units"
-                    className="flex items-center gap-3 rounded-xl p-3 hover:bg-cyan-700"
-                >
-                    <BuildingOffice2Icon className="h-6 w-6" />
-                    Unit
-                </Link>
-
-                <Link
-                    href="/materials"
-                    className="flex items-center gap-3 rounded-xl p-3 hover:bg-cyan-700"
-                >
-                    <CubeIcon className="h-6 w-6" />
-                    Material
-                </Link>
-
-                <Link
-                    href="/progress"
-                    className="flex items-center gap-3 rounded-xl p-3 hover:bg-cyan-700"
-                >
-                    <ClipboardDocumentListIcon className="h-6 w-6" />
-                    Progress
-                </Link>
-
-                <Link
-                    href="/monitoring"
-                    className="flex items-center gap-3 rounded-xl p-3 hover:bg-cyan-700"
-                >
-                    <ChartBarIcon className="h-6 w-6" />
-                    Monitoring
-                </Link>
-
-                <Link
-                    href="/roles"
-                    className="flex items-center gap-3 rounded-xl p-3 hover:bg-cyan-700"
-                >
-                    <UsersIcon className="h-6 w-6" />
-                    Role
-                </Link>
-
+                        return (
+                            <Link
+                                key={menu.title}
+                                href={menu.href}
+                                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${isActive
+                                        ? "bg-primary text-white shadow-sm"
+                                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
+                                    }`}
+                            >
+                                <Icon size={16} />
+                                {menu.title}
+                            </Link>
+                        );
+                    })}
             </nav>
 
-            <div className="absolute bottom-0 w-full border-t border-slate-700 p-5">
+            <div className="border-t border-sidebar-border p-4">
+                <div className="flex items-center justify-between rounded-xl bg-sidebar-accent/60 px-3 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                        <div className="grid size-8 place-items-center rounded-full bg-primary text-xs font-bold text-white">
+                            {initials}
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold leading-tight text-white">
+                                {auth.user.name}
+                            </p>
+                            <RoleBadge role={role} />
+                        </div>
+                    </div>
 
-                <div className="font-semibold">
-                    {auth.user.name}
+                    <Link
+                        href={route("logout")}
+                        method="post"
+                        as="button"
+                        className="rounded-lg p-1.5 text-sidebar-foreground/50 hover:bg-red-500/20 hover:text-red-300"
+                        title="Keluar"
+                    >
+                        <LogOut size={15} />
+                    </Link>
                 </div>
-
-                <div className="text-sm text-slate-400">
-                    {auth.user.email}
-                </div>
-
             </div>
-
         </aside>
     );
 }
