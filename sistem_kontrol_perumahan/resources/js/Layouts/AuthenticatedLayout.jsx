@@ -6,10 +6,7 @@ import { Bell } from "lucide-react";
 export default function AuthenticatedLayout({ children }) {
     const { auth } = usePage().props;
 
-    const role =
-        auth.user.roles?.length > 0
-            ? auth.user.roles[0].name
-            : "";
+    const role = auth.user.roles?.[0] ?? "";
 
     const initials = auth.user.name
         .split(" ")

@@ -15,50 +15,60 @@ export default function Sidebar() {
     const { auth } = usePage().props;
     const currentUrl = usePage().url;
 
-    const role =
-        auth.user.roles?.length > 0
-            ? auth.user.roles[0].name
-            : "";
+    const role = auth.user.roles?.[0] ?? "";
 
     const menus = [
         {
             title: "Dashboard",
+            route: "dashboard",
             href: route("dashboard"),
             icon: Home,
             roles: ["Super Admin", "Admin", "Owner"],
         },
+
         {
             title: "Mengelola Unit",
+            route: "unit.index",
             href: "#",
             icon: Building2,
             roles: ["Super Admin", "Admin"],
         },
+
         {
             title: "Log Gudang",
+            route: "gudang.index",
             href: "#",
             icon: Boxes,
             roles: ["Super Admin", "Admin"],
         },
+
         {
             title: "Update Progress",
+            route: "progress.index",
             href: "#",
             icon: TrendingUp,
             roles: ["Super Admin", "Admin"],
         },
+
         {
-            title: "Standar Progres",
+            title: "Standar Progress",
+            route: "standar.index",
             href: "#",
             icon: ClipboardList,
             roles: ["Super Admin", "Admin"],
         },
+
         {
             title: "Master Material",
+            route: "material.index",
             href: "#",
             icon: Database,
             roles: ["Super Admin", "Admin"],
         },
+
         {
             title: "User & Role",
+            route: "users.index",
             href: "#",
             icon: Users,
             roles: ["Super Admin"],
@@ -84,23 +94,27 @@ export default function Sidebar() {
                 </div>
             </div>
 
-            <nav className="flex-1 space-y-0.5 overflow-y-auto p-3 text-sm">
-                <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40">
-                    Menu
+            <nav className="flex-1 overflow-y-auto px-4 py-5">
+                <p className="mb-4 px-3 text-[11px] font-bold uppercase tracking-[0.25em] text-sidebar-foreground/40">
+                    MENU
                 </p>
 
                 {menus
                     .filter((menu) => menu.roles.includes(role))
                     .map((menu) => {
                         const Icon = menu.icon;
-                        const isActive = currentUrl === menu.href;
+                        const isActive =
+                            menu.route === "dashboard"
+                                ? route().current("dashboard")
+                                : false;
 
                         return (
                             <Link
                                 key={menu.title}
                                 href={menu.href}
-                                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${isActive
-                                        ? "bg-primary text-white shadow-sm"
+                                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 transition-all
+                                    ${isActive
+                                        ? "bg-primary text-white shadow-md"
                                         : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
                                     }`}
                             >
@@ -111,7 +125,7 @@ export default function Sidebar() {
                     })}
             </nav>
 
-            <div className="border-t border-sidebar-border p-4">
+            <div className="mt-auto border-t border-sidebar-border p-4">
                 <div className="flex items-center justify-between rounded-xl bg-sidebar-accent/60 px-3 py-2.5">
                     <div className="flex items-center gap-2.5">
                         <div className="grid size-8 place-items-center rounded-full bg-primary text-xs font-bold text-white">
