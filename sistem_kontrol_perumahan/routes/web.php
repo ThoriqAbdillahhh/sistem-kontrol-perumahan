@@ -26,9 +26,10 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/log-gudang', [LogGudangController::class, 'index']);
-    Route::post('/log-gudang/masuk', [LogGudangController::class, 'storeMasuk']);
-    Route::post('/log-gudang/keluar', [LogGudangController::class, 'storeKeluar']);
+    Route::get('/log-gudang', [LogGudangController::class, 'index'])->name('gudang.index');
+    Route::post('/log-gudang/masuk', [LogGudangController::class, 'storeMasuk'])->name('gudang.storeMasuk');
+    Route::post('/log-gudang/keluar', [LogGudangController::class, 'storeKeluar'])->name('gudang.storeKeluar');
 });
+
 
 require __DIR__.'/auth.php';
