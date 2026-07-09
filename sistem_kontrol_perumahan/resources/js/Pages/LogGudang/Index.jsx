@@ -2,9 +2,6 @@ import { useMemo, useState } from 'react';
 import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { Plus, Edit3, Trash2, X } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import TableCard from '@/Components/TableCard';
-import SectionHeader from '@/Components/SectionHeader';
-import SearchBar from '@/Components/SearchBar';
 
 function formatRupiah(v) {
   return 'Rp ' + Number(v ?? 0).toLocaleString('id-ID');

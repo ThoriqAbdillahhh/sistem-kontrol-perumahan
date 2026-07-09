@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LogGudangController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -21,6 +22,13 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/log-gudang', [LogGudangController::class, 'index']);
+    Route::post('/log-gudang/masuk', [LogGudangController::class, 'storeMasuk']);
+    Route::post('/log-gudang/keluar', [LogGudangController::class, 'storeKeluar']);
 });
 
 require __DIR__.'/auth.php';
