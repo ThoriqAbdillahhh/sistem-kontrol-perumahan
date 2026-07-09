@@ -7,7 +7,7 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        login: "",
+        email: "",
         password: "",
     });
 
@@ -53,19 +53,19 @@ export default function Login() {
                         <div className="mb-6">
 
                             <label className="mb-2 block text-sm font-bold uppercase tracking-wide text-cyan-300">
-                                Username / Email
+                                Email
                             </label>
 
                             <input
-                                type="text"
-                                value={data.login}
-                                onChange={(e) => setData("login", e.target.value)}
-                                placeholder="contoh: admin.riko atau admin@email.com"
+                                type="email"
+                                value={data.email}
+                                onChange={(e) => setData("email", e.target.value)}
+                                placeholder="contoh: admin@email.com"
                                 className="w-full rounded-2xl border border-slate-600 bg-[#2A3C4D] px-5 py-4 text-white placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
                             />
 
                             <p className="mt-2 text-sm text-red-400">
-                                {errors.login}
+                                {errors.email}
                             </p>
 
                         </div>
