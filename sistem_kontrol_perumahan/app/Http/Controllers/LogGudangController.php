@@ -11,7 +11,6 @@ use App\Models\ProgressUnit;
 use App\Models\Unit;
 use App\Services\MaterialConsumptionService;
 use App\Services\StokGudangService;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -22,7 +21,7 @@ class LogGudangController extends Controller
         protected MaterialConsumptionService $consumptionService,
     ) {}
 
-    public function index(): Response
+    public function index(): \Inertia\Response
     {
         return Inertia::render('LogGudang/Index', [
             'logMasuk'  => LogMasukGudang::with('material')->orderByDesc('tanggal')->get(),

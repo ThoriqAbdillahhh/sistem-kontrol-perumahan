@@ -3,33 +3,52 @@
 namespace App\Services;
 
 use App\Models\Material;
+use App\Models\LogMasukGudang;
+use App\Models\LogKeluarHarian;
 
 class StokGudangService
 {
-    public static function summary()
+    public function stokSemuaMaterial()
     {
         return Material::query()
-            ->select(['id', 'kode_material as kode', 'nama_material as nama', 'satuan', 'harga'])
-            ->withSum('logMasuk as total_masuk', 'qty')
-            ->withSum('logKeluar as total_keluar', 'qty')
+            ->select('materials.*')
+            ->selectSub(
+                LogMasukGudang::whereColumn('material_id', 'materials.id')
+                    ->selectRaw('COALESCE(SUM(qty), 0)'),
+                'total_masuk'
+            )
+            ->selectSub(
+                LogKeluarHarian::whereColumn('material_id', 'materials.id')
+                    ->selectRaw('COALESCE(SUM(qty), 0)'),
+                'total_keluar'
+            )
             ->get()
-            ->map(function (Material $m) {
-                $totalMasuk  = (float) ($m->total_masuk ?? 0);
-                $totalKeluar = (float) ($m->total_keluar ?? 0);
-                $sisa        = $totalMasuk - $totalKeluar;
+            ->map(function ($m) {
+                $m->stok_saat_ini = $m->total_masuk - $m->total_keluar;
+                return $m;
+            });
+    }
 
-                return [
-                    'material_id'  => $m->id,
-                    'kode'         => $m->kode,
-                    'nama'         => $m->nama,
-                    'satuan'       => $m->satuan,
-                    'total_masuk'  => $totalMasuk,
-                    'total_keluar' => $totalKeluar,
-                    'sisa_stok'    => $sisa,
-                    'nilai_rupiah' => $sisa * (float) $m->harga,
-                    'is_warning'   => $sisa < 0,
-                ];
-            })
-            ->values();
+    public function stokMaterial(int $materialId): float
+    {
+        $masuk = LogMasukGudang::where('material_id', $materialId)->sum('qty');
+        $keluar = LogKeluarHarian::where('material_id', $materialId)->sum('qty');
+
+        return $masuk - $keluar;
+    }
+
+    public function ringkasanDashboard()
+    {
+        return $this->stokSemuaMaterial()->map(function ($m) {
+            $persen = $m->total_masuk > 0
+                ? round(($m->stok_saat_ini / $m->total_masuk) * 100)
+                : 0;
+
+            return [
+                'nama'     => $m->nama_material,
+                'sisaStok' => $m->stok_saat_ini,
+                'persen'   => max(0, min(100, $persen)),
+            ];
+        })->values();
     }
 }
