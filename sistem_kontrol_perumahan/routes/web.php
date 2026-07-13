@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LogGudangController;
+use App\Http\Controllers\UserRoleController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -67,6 +68,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/standar/{matrix}/detail', [StandarProgressController::class, 'storeDetail'])->name('standar.detail.store');
     Route::put('/standar-detail/{detail}', [StandarProgressController::class, 'updateDetail'])->name('standar.detail.update');
     Route::delete('/standar-detail/{detail}', [StandarProgressController::class, 'destroyDetail'])->name('standar.detail.destroy');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/user-role', [UserRoleController::class, 'index'])->name('users.index');
+    Route::patch('/user-role/{user}/toggle-status', [UserRoleController::class, 'toggleStatus'])->name('users.toggle');
+    Route::delete('/user-role/{user}', [UserRoleController::class, 'destroy'])->name('users.destroy');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/user-role', [UserRoleController::class, 'index'])->name('users.index');
+    Route::get('/user-role/create', [UserRoleController::class, 'create'])->name('users.create');
+    Route::post('/user-role', [UserRoleController::class, 'store'])->name('users.store');
+    Route::get('/user-role/{user}/edit', [UserRoleController::class, 'edit'])->name('users.edit');
+    Route::put('/user-role/{user}', [UserRoleController::class, 'update'])->name('users.update');
+    Route::patch('/user-role/{user}/toggle-status', [UserRoleController::class, 'toggleStatus'])->name('users.toggle');
+    Route::delete('/user-role/{user}', [UserRoleController::class, 'destroy'])->name('users.destroy');
 });
 
 require __DIR__.'/auth.php';
