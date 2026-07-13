@@ -22,7 +22,7 @@ class LogGudangController extends Controller
             'materials' => Material::orderBy('nama_material')
                 ->get(['id', 'kode_material as kode', 'nama_material as nama', 'satuan']),
             'units'     => Unit::orderBy('nama_unit')->get(['id', 'nama_unit', 'zona']),
-            'stok'      => StokGudangService::summary(),
+            'stok'      => (new StokGudangService())->stokSemuaMaterial(),
         ]);
     }
 
