@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 function formatRupiah(n) {
   const num = Number(n) || 0;
@@ -16,13 +17,51 @@ function nextMaterialCode(materials) {
   return "MT" + String(next).padStart(3, "0");
 }
 
+function highlightMatch(text, keyword) {
+    if (!keyword.trim()) return text;
+
+    const regex = new RegExp(`(${keyword})`, "ig");
+    const parts = text.split(regex);
+
+    return parts.map((part, index) =>
+        regex.test(part) ? (
+            <mark
+                key={index}
+                className="rounded bg-yellow-200 px-0.5 text-black"
+            >
+                {part}
+            </mark>
+        ) : (
+            part
+        )
+    );
+}
+
+// Kolom yang bisa disortir. key = null artinya kolom tidak bisa diklik.
+const TABLE_COLUMNS = [
+  { label: "Kode", key: "kode_material" },
+  { label: "Nama Material", key: "nama_material" },
+  { label: "Kategori", key: null },
+  { label: "Satuan", key: null },
+  { label: "Harga Acuan", key: "harga" },
+  { label: "Aksi", key: null, align: "right" },
+];
+
+// Pilihan jumlah baris per halaman
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
 export default function MaterialIndex({ materials, kategoriOptions, satuanOptions }) {
    const { flash, auth } = usePage().props;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null); // material row being edited, or null = add mode
+  const [deletingMaterial, setDeletingMaterial] = useState(null);
   const [query, setQuery] = useState("");
   const [kategoriFilter, setKategoriFilter] = useState("Semua");
+  const [sortBy, setSortBy] = useState(null); // "kode_material" | "nama_material" | "harga" | null
+  const [sortDir, setSortDir] = useState("asc"); // "asc" | "desc"
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
 
   const form = useForm({
     kode_material: "",
@@ -32,9 +71,19 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
     harga: 0,
   });
 
+  function toggleSort(key) {
+    if (sortBy === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      // default arah: harga dari mahal ke murah, teks dari A ke Z
+      setSortDir(key === "harga" ? "desc" : "asc");
+    }
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return materials.filter((m) => {
+    let result = materials.filter((m) => {
       const matchQ =
         !q ||
         m.kode_material.toLowerCase().includes(q) ||
@@ -42,7 +91,45 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
       const matchK = kategoriFilter === "Semua" || m.kategori === kategoriFilter;
       return matchQ && matchK;
     });
-  }, [materials, query, kategoriFilter]);
+
+    if (sortBy) {
+      result = [...result].sort((a, b) => {
+        let cmp = 0;
+        if (sortBy === "harga") {
+          cmp = Number(a.harga) - Number(b.harga);
+        } else {
+          // "kode_material" & "nama_material": urut abjad + angka (natural sort)
+          cmp = String(a[sortBy]).localeCompare(String(b[sortBy]), "id", {
+            numeric: true,
+            sensitivity: "base",
+          });
+        }
+        return sortDir === "asc" ? cmp : -cmp;
+      });
+    }
+
+    return result;
+  }, [materials, query, kategoriFilter, sortBy, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
+
+  // Balik ke halaman 1 setiap kali search/filter/sort/pageSize berubah
+  useEffect(() => {
+    setPage(1);
+  }, [query, kategoriFilter, sortBy, sortDir, pageSize]);
+
+  // Kalau data berkurang (misal habis delete) dan halaman aktif jadi kelebihan, tarik mundur
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages));
+  }, [totalPages]);
+
+  const rangeStart = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, filtered.length);
 
   function openAdd() {
     setEditTarget(null);
@@ -92,20 +179,23 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
     }
   }
 
-  function handleDelete(m) {
-    if (
-      window.confirm(
-        `Hapus material "${m.nama_material}" (${m.kode_material})? Histori transaksi lama tidak ikut terhapus.`
-      )
-    ) {
-      router.delete(route("material.destroy", m.id), {
+  function handleDelete(material) {
+    setDeletingMaterial(material);
+}
+
+function confirmDelete() {
+    if (!deletingMaterial) return;
+
+    router.delete(route("material.destroy", deletingMaterial.id), {
         preserveScroll: true,
         onSuccess: () => {
-          if (editTarget?.id === m.id) closeDrawer();
+            if (editTarget?.id === deletingMaterial.id) {
+                closeDrawer();
+            }
+            setDeletingMaterial(null);
         },
-      });
-    }
-  }
+    });
+}
 
   return (
     <AuthenticatedLayout auth={usePage().props.auth}>
@@ -115,7 +205,6 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
         <div>
           <h1 className="text-xl font-bold">Master Material</h1>
           <p className="text-sm text-muted-foreground">
-            CRUD data material acuan — kode, kategori, satuan, dan harga acuan proyek.
           </p>
         </div>
 
@@ -150,6 +239,18 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
                     <option key={k}>{k}</option>
                   ))}
                 </select>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  title="Baris per halaman"
+                  className="rounded-xl border border-border bg-white px-3 py-2 text-xs outline-none focus:border-primary"
+                >
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n} / halaman
+                    </option>
+                  ))}
+                </select>
                 <button
                   onClick={openAdd}
                   className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white"
@@ -163,15 +264,37 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
               <table className="w-full min-w-[660px] text-sm">
                 <thead className="bg-muted text-xs uppercase tracking-wider text-muted-foreground">
                   <tr>
-                    {["Kode", "Nama Material", "Kategori", "Satuan", "Harga Acuan", "Aksi"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left font-semibold">
-                        {h}
-                      </th>
-                    ))}
+                {TABLE_COLUMNS.map((col) => (
+                    <th
+                        key={col.label}
+                        onClick={col.key ? () => toggleSort(col.key) : undefined}
+                        className={`px-4 py-3 font-semibold ${
+                        col.align === "right" ? "text-right" : "text-left"
+                        } ${col.key ? "cursor-pointer select-none hover:text-foreground" : ""}`}
+                >
+                    <span
+                    className={`inline-flex items-center gap-1 ${
+                        col.align === "right" ? "justify-end w-full" : ""
+                    }`}
+                    >
+                    {col.label}
+                    {col.key &&
+                        (sortBy === col.key ? (
+                        sortDir === "asc" ? (
+                            <ArrowUp size={12} />
+                        ) : (
+                            <ArrowDown size={12} />
+                        )
+                        ) : (
+                        <ArrowUpDown size={12} className="opacity-40" />
+                        ))}
+                    </span>
+                </th>
+                ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((m) => (
+                  {paginated.map((m) => (
                     <tr
                       key={m.id}
                       className={`border-t border-border hover:bg-secondary/50 ${
@@ -179,9 +302,11 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
                       }`}
                     >
                       <td className="px-4 py-3 font-mono text-xs font-bold text-primary">
-                        {m.kode_material}
-                      </td>
-                      <td className="px-4 py-3 font-semibold">{m.nama_material}</td>
+                        {highlightMatch(m.kode_material, query)}
+                    </td>
+                      <td className="px-4 py-3 font-semibold">
+                    {highlightMatch(m.nama_material, query)}
+                </td>
                       <td className="px-4 py-3">
                         <span className="rounded-md bg-muted px-2 py-0.5 text-xs">{m.kategori}</span>
                       </td>
@@ -189,22 +314,23 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
                       <td className="px-4 py-3 font-mono text-xs font-semibold">
                         {formatRupiah(m.harga)}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <button
+                                        <td className="px-4 py-3 text-right">
+                        <button
                             onClick={() => openEdit(m)}
-                            className="rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary"
-                          >
-                            Edit
-                          </button>
-                          <button
+                            title="Edit"
+                            className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50 transition-colors"
+                        >
+                            <Pencil size={16} />
+                        </button>
+
+                        <button
                             onClick={() => handleDelete(m)}
-                            className="rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:border-red-400 hover:text-red-500"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      </td>
+                            title="Hapus"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </td>
                     </tr>
                   ))}
                   {filtered.length === 0 && (
@@ -217,6 +343,36 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
                 </tbody>
               </table>
             </div>
+
+            {/* ── Pagination footer ──────────────────────────────── */}
+            {filtered.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>
+                  Menampilkan {rangeStart}–{rangeEnd} dari {filtered.length} data
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="font-semibold text-foreground">
+                    Halaman {page} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── Drawer: Add / Edit form ─────────────────────────── */}
@@ -334,6 +490,47 @@ export default function MaterialIndex({ materials, kategoriOptions, satuanOption
           )}
         </div>
       </div>
+
+      {deletingMaterial && (
+    <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+        onClick={() => setDeletingMaterial(null)}
+    >
+        <div
+            className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+        >
+            <h2 className="mb-2 text-lg font-semibold text-slate-900">
+                Hapus Material?
+            </h2>
+
+            <p className="mb-6 text-sm text-slate-500">
+                Material{" "}
+                <span className="font-medium text-slate-700">
+                    {deletingMaterial.nama_material}
+                </span>{" "}
+                ({deletingMaterial.kode_material}) akan dihapus permanen.
+                Histori transaksi lama tidak ikut terhapus.
+            </p>
+
+            <div className="flex justify-end gap-2">
+                <button
+                    onClick={() => setDeletingMaterial(null)}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+                >
+                    Batal
+                </button>
+
+                <button
+                    onClick={confirmDelete}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                >
+                    Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+)}
     </AuthenticatedLayout>
   );
 }
