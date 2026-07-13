@@ -83,7 +83,7 @@ export default function Sidebar() {
         .toUpperCase();
 
     return (
-        <aside className="flex h-screen w-72 flex-col bg-sidebar text-sidebar-foreground">
+        <aside className="fixed inset-y-0 left-0 z-40 flex h-screen w-72 flex-col bg-sidebar text-sidebar-foreground">
             <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
                 <div className="grid size-10 place-items-center rounded-xl bg-primary text-white shadow-md">
                     <Building2 size={20} />
