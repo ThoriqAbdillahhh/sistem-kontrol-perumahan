@@ -1,8 +1,8 @@
 <?php
 
-namespace App\models;
+namespace App\Models;
 
-use Illuminate\Database\Eluquent\Attributes\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class LogMasukGudang extends Model
 {
