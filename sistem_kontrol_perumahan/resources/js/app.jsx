@@ -1,11 +1,19 @@
 import '../css/app.css';
 
 
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+router.on('invalid', (event) => {
+    const status = event.detail.response?.status;
+    if (status === 401 || status === 419) {
+        event.preventDefault();
+        window.location.href = '/login';
+    }
+});
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
