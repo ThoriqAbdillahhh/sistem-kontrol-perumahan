@@ -1,10 +1,9 @@
-    <?php
+<?php
+namespace App\Services;
 
-    namespace App\Services;
-
-    use App\Models\Material;
-    use App\Models\LogMasukGudang;
-    use App\Models\LogKeluarHarian;
+use App\Models\Material;
+use App\Models\LogMasukGudang;
+use App\Models\LogKeluarHarian;
 
     class StokGudangService
     {
