@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
-import { Pencil, Trash2, Search, X, ArrowUpDown } from 'lucide-react';
+import { Pencil, Trash2, Search, X, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 function SortableHeader({ label, column, sortBy, sortDir, onSort }) {
     const isActive = sortBy === column;
@@ -46,6 +46,8 @@ export default function UnitIndex({ units }) {
     const [filterStatus, setFilterStatus] = useState('Semua');
     const [sortBy, setSortBy] = useState(null);
     const [sortDir, setSortDir] = useState('asc');
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
 
     function toggleSort(column) {
         if (sortBy === column) {
@@ -83,6 +85,12 @@ export default function UnitIndex({ units }) {
             const result = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
             return sortDir === 'asc' ? result : -result;
         });
+    const totalPages = pageSize === 'all' ? 1 : Math.ceil(filteredUnits.length / pageSize);
+    const paginatedUnits =
+        pageSize === 'all' ? filteredUnits : filteredUnits.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, filterStatus, pageSize]);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         nama_unit: '',
@@ -176,6 +184,15 @@ export default function UnitIndex({ units }) {
                                         <option value="Aktif">Aktif</option>
                                         <option value="Non-aktif">Non-aktif</option>
                                     </select>
+                                    <select
+                                        value={pageSize}
+                                        onChange={(e) => setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-sky-600"
+                                    >
+                                        <option value={10}>10 / halaman</option>
+                                        <option value={50}>50 / halaman</option>
+                                        <option value="all">Semua</option>
+                                    </select>
 
                                     <button
                                         onClick={openAdd}
@@ -200,7 +217,7 @@ export default function UnitIndex({ units }) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredUnits.map((unit) => (
+                                        {paginatedUnits.map((unit) => (
                                             <tr key={unit.id} className="border-t border-slate-200 hover:bg-slate-50 transition-colors">
                                                 <td className="px-4 py-3 font-mono font-bold text-sky-600">
                                                     {highlightText(unit.nama_unit, search)}
@@ -249,7 +266,7 @@ export default function UnitIndex({ units }) {
                                                 </td>
                                             </tr>
                                         ))}
-                                        {filteredUnits.length === 0 && (
+                                        {paginatedUnits.length === 0 && (
                                             <tr>
                                                 <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
                                                     Belum ada data unit.
@@ -258,6 +275,35 @@ export default function UnitIndex({ units }) {
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-sm">
+                                <div className="text-slate-500">
+                                    {filteredUnits.length} unit ditemukan
+                                </div>
+
+                                {pageSize !== 'all' && totalPages > 1 && (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            title="Sebelumnya"
+                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                                        >
+                                            <ChevronLeft size={15} />
+                                        </button>
+                                        <span className="text-slate-500">
+                                            Halaman {currentPage} / {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            title="Selanjutnya"
+                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                                        >
+                                            <ChevronRight size={15} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
