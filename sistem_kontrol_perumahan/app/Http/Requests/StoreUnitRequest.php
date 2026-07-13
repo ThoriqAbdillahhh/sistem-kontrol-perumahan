@@ -17,7 +17,18 @@ class StoreUnitRequest extends FormRequest
         $unitId = $this->route('unit')?->id;
 
         return [
-            'nama_unit'     => ['required', 'string', 'max:50', Rule::unique('units', 'nama_unit')->ignore($unitId)],
+            'nama_unit' => [
+                'required', 'string', 'max:50',
+                function ($attribute, $value, $fail) use ($unitId) {
+                    $exists = \App\Models\Unit::whereRaw('LOWER(nama_unit) = ?', [strtolower($value)])
+                        ->when($unitId, fn ($q) => $q->where('id', '!=', $unitId))
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Nama unit sudah digunakan.');
+                    }
+                },
+            ],
             'zona'          => ['required', 'string', 'max:20'],
             'status'        => ['required', 'string', 'in:Aktif,Non-aktif'],
             'tukang'        => ['required', 'string', 'max:100'],
