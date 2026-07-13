@@ -13,63 +13,48 @@ import RoleBadge from "@/Components/RoleBadge";
 
 export default function Sidebar() {
     const { auth } = usePage().props;
-    const currentUrl = usePage().url;
-
     const role = auth.user.roles?.[0] ?? "";
 
     const menus = [
         {
             title: "Dashboard",
             route: "dashboard",
-            href: route("dashboard"),
             icon: Home,
             roles: ["Super Admin", "Admin", "Owner"],
         },
-
         {
             title: "Mengelola Unit",
             route: "unit.index",
-            href: "#",
             icon: Building2,
             roles: ["Super Admin", "Admin"],
         },
-
         {
             title: "Log Gudang",
             route: "gudang.index",
-            href: "#",
             icon: Boxes,
             roles: ["Super Admin", "Admin"],
         },
-
         {
             title: "Update Progress",
             route: "progress.index",
-            href: "#",
             icon: TrendingUp,
             roles: ["Super Admin", "Admin"],
         },
-
         {
             title: "Standar Progress",
             route: "standar.index",
-            href: "#",
             icon: ClipboardList,
             roles: ["Super Admin", "Admin"],
         },
-
         {
             title: "Master Material",
             route: "material.index",
-            href: "#",
             icon: Database,
             roles: ["Super Admin", "Admin"],
         },
-
         {
             title: "User & Role",
             route: "users.index",
-            href: "#",
             icon: Users,
             roles: ["Super Admin"],
         },
@@ -83,7 +68,7 @@ export default function Sidebar() {
         .toUpperCase();
 
     return (
-        <aside className="flex h-screen w-72 flex-col bg-sidebar text-sidebar-foreground">
+        <aside className="fixed inset-y-0 left-0 z-40 flex h-screen w-72 flex-col bg-sidebar text-sidebar-foreground">
             <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
                 <div className="grid size-10 place-items-center rounded-xl bg-primary text-white shadow-md">
                     <Building2 size={20} />
@@ -103,20 +88,20 @@ export default function Sidebar() {
                     .filter((menu) => menu.roles.includes(role))
                     .map((menu) => {
                         const Icon = menu.icon;
-                        const isActive =
-                            menu.route === "dashboard"
-                                ? route().current("dashboard")
-                                : false;
+                        const routeExists = route().has(menu.route);
+                        const href = routeExists ? route(menu.route) : "#";
+                        const isActive = routeExists && route().current(menu.route);
 
                         return (
                             <Link
                                 key={menu.title}
-                                href={menu.href}
+                                href={href}
                                 className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 transition-all
                                     ${isActive
                                         ? "bg-primary text-white shadow-md"
                                         : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
-                                    }`}
+                                    }
+                                    ${!routeExists ? "opacity-40 cursor-not-allowed" : ""}`}
                             >
                                 <Icon size={16} />
                                 {menu.title}

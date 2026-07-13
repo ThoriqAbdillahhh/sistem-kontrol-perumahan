@@ -3,80 +3,58 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
-use Illuminate\Support\Facades\DB;
+use App\Models\LogKeluarHarian;
+use App\Services\StokGudangService;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    public function __construct(protected StokGudangService $stokService) {}
+
     public function index()
     {
-        $units = Unit::orderBy('nama_unit')->get();
+        $bulanIni = Carbon::now();
 
-        // Status material (Aman/Boros) per unit + progress terakhir, dari view v_monitoring_progress
-        $monitoring = DB::table('v_monitoring_progress')
-            ->select(
-                'unit_id',
-                DB::raw('MAX(progress_percent) as progress_percent'),
-                DB::raw("BOOL_OR(analisa = 'WASTE') as has_waste")
-            )
-            ->groupBy('unit_id')
-            ->get()
-            ->keyBy('unit_id');
+        $pengeluaranBulanIni = LogKeluarHarian::whereMonth('tanggal', $bulanIni->month)
+            ->whereYear('tanggal', $bulanIni->year)
+            ->sum('total');
 
-        $rows = $units->map(function ($unit) use ($monitoring) {
-            $m = $monitoring->get($unit->id);
-            $progress = $m ? (float) $m->progress_percent : 0;
+        $units = Unit::with('latestProgress')->get();
 
-            $statusMaterial = $progress >= 100
+        $totalUnit   = $units->count();
+        $unitAktif   = $units->where('status', 'Aktif')->count();
+        $unitSelesai = $units->filter(fn ($u) => ($u->latestProgress?->progress_percent ?? 0) == 100)->count();
+        $unitBoros   = $units->filter(fn ($u) => $u->latestProgress?->status === 'Boros')->count();
+
+        $rows = $units->map(function ($u) {
+            $progress = $u->latestProgress?->progress_percent ?? 0;
+
+            // Selesai punya prioritas tampilan di atas status boros/aman
+            $statusMaterial = $progress == 100
                 ? 'Selesai'
-                : (($m && $m->has_waste) ? 'Boros' : 'Aman');
+                : ($u->latestProgress?->status ?? 'Aman');
 
             return [
-                'id' => $unit->nama_unit,
-                'zona' => $unit->zona,
-                'tukang' => $unit->tukang,
-                'progress' => (int) round($progress),
-                'status' => $unit->status,
+                'id'             => $u->nama_unit,
+                'zona'           => $u->zona,
+                'tukang'         => $u->tukang,
+                'progress'       => (int) $progress,
+                'status'         => $u->status,
                 'statusMaterial' => $statusMaterial,
             ];
         });
 
-        $unitAktif = $units->where('status', 'Aktif')->count();
-        $unitSelesai = $rows->where('statusMaterial', 'Selesai')->count();
-        $unitBoros = $rows->where('statusMaterial', 'Boros')->count();
-
-        // Stok gudang, dari view v_stok_gudang
-        $stokGudang = DB::table('v_stok_gudang')
-            ->orderByDesc('sisa_stok')
-            ->limit(5)
-            ->get()
-            ->map(fn ($s) => [
-                'nama' => $s->nama_material,
-                'sisaStok' => (float) $s->sisa_stok,
-            ]);
-
-        $maxStok = $stokGudang->max('sisaStok') ?: 1;
-        $stokGudang = $stokGudang->map(function ($s) use ($maxStok) {
-            $s['persen'] = min(100, round(($s['sisaStok'] / $maxStok) * 100));
-            return $s;
-        });
-
-        // Pengeluaran bulan ini, dari log_keluar_harian (proxy sebelum modul Kas ada)
-        $pengeluaranBulanIni = (float) DB::table('log_keluar_harian')
-            ->whereMonth('tanggal', now()->month)
-            ->whereYear('tanggal', now()->year)
-            ->sum('total');
-
         return Inertia::render('Dashboard/Index', [
             'kpi' => [
-                'unitAktif' => $unitAktif,
-                'totalUnit' => $units->count(),
-                'unitSelesai' => $unitSelesai,
-                'unitBoros' => $unitBoros,
-                'pengeluaranBulanIni' => $pengeluaranBulanIni,
+                'unitAktif'           => $unitAktif,
+                'totalUnit'           => $totalUnit,
+                'unitSelesai'         => $unitSelesai,
+                'unitBoros'           => $unitBoros,
+                'pengeluaranBulanIni' => (float) $pengeluaranBulanIni,
             ],
-            'rows' => $rows->values(),
-            'stokGudang' => $stokGudang->values(),
+            'rows'       => $rows,
+            'stokGudang' => $this->stokService->ringkasanDashboard(),
         ]);
     }
 }
