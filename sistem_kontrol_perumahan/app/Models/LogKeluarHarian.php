@@ -9,19 +9,13 @@ class LogKeluarHarian extends Model
     protected $table = 'log_keluar_harian';
 
     protected $fillable = [
-        'tanggal',
-        'material_id',
-        'unit_id',
-        'qty',
-        'harga',
-        'total',
-        'keterangan',
-        'created_by'
+        'tanggal', 'unit_id', 'material_id', 'qty',
+        'harga', 'total', 'keterangan', 'created_by',
     ];
-    protected function casts(): array
-    {
-        return ['tanggal' => 'date', 'qty' => 'decimal:2', 'harga' => 'decimal:2', 'total' => 'decimal:2'];
-    }
+
+    protected $casts = [
+        'tanggal' => 'date',
+    ];
 
     public function material()
     {
@@ -31,5 +25,10 @@ class LogKeluarHarian extends Model
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
