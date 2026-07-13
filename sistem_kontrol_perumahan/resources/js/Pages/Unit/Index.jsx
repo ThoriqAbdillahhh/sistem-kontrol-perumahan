@@ -76,14 +76,12 @@ export default function UnitIndex({ units }) {
             if (sortBy === 'tanggal_mulai') {
                 valA = valA ? new Date(valA).getTime() : 0;
                 valB = valB ? new Date(valB).getTime() : 0;
-            } else {
-                valA = valA.toLowerCase();
-                valB = valB.toLowerCase();
+                const result = valA - valB;
+                return sortDir === 'asc' ? result : -result;
             }
 
-            if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-            if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-            return 0;
+            const result = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+            return sortDir === 'asc' ? result : -result;
         });
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
