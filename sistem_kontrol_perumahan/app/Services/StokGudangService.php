@@ -24,9 +24,21 @@ class StokGudangService
             )
             ->get()
             ->map(function ($m) {
-                $m->stok_saat_ini = $m->total_masuk - $m->total_keluar;
-                return $m;
-            });
+                $sisaStok = (float) $m->total_masuk - (float) $m->total_keluar;
+
+                return [
+                    'material_id'  => $m->id,
+                    'kode'         => $m->kode_material,
+                    'nama'         => $m->nama_material,
+                    'satuan'       => $m->satuan,
+                    'total_masuk'  => (float) $m->total_masuk,
+                    'total_keluar' => (float) $m->total_keluar,
+                    'sisa_stok'    => $sisaStok,
+                    'nilai_rupiah' => $sisaStok * (float) $m->harga,
+                    'is_warning'   => $sisaStok <= 0,
+                ];
+            })
+            ->values();
     }
 
     public function stokMaterial(int $materialId): float
@@ -40,13 +52,13 @@ class StokGudangService
     public function ringkasanDashboard()
     {
         return $this->stokSemuaMaterial()->map(function ($m) {
-            $persen = $m->total_masuk > 0
-                ? round(($m->stok_saat_ini / $m->total_masuk) * 100)
+            $persen = $m['total_masuk'] > 0
+                ? round(($m['sisa_stok'] / $m['total_masuk']) * 100)
                 : 0;
 
             return [
-                'nama'     => $m->nama_material,
-                'sisaStok' => $m->stok_saat_ini,
+                'nama'     => $m['nama'],
+                'sisaStok' => $m['sisa_stok'],
                 'persen'   => max(0, min(100, $persen)),
             ];
         })->values();

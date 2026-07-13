@@ -9,7 +9,7 @@ export default function SearchBar({ value, onChange, placeholder = "Cari..." }) 
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-40 bg-transparent text-xs outline-none"
+                className="w-40 bg-transparent text-xs text-foreground caret-current outline-none"
             />
         </div>
     );

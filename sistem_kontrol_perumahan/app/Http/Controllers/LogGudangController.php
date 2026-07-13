@@ -40,13 +40,56 @@ class LogGudangController extends Controller
         return back()->with('success', 'Log masuk berhasil ditambahkan.');
     }
 
+    public function updateMasuk(StoreLogMasukRequest $request, LogMasukGudang $logMasuk)
+    {
+        $logMasuk->update($request->validated());
+
+        return back()->with('success', 'Log masuk berhasil diperbarui.');
+    }
+
+    public function destroyMasuk(LogMasukGudang $logMasuk)
+    {
+        $logMasuk->delete();
+
+        return back()->with('success', 'Log masuk berhasil dihapus.');
+    }
+
     public function storeKeluar(StoreLogKeluarRequest $request)
     {
         $data = $request->validated();
 
         LogKeluarHarian::create([...$data, 'created_by' => Auth::id()]);
 
-        $unit = Unit::findOrFail($data['unit_id']);
+        $this->syncProgressStatus($data['unit_id']);
+
+        return back()->with('success', 'Log keluar berhasil ditambahkan.');
+    }
+
+    public function updateKeluar(StoreLogKeluarRequest $request, LogKeluarHarian $logKeluar)
+    {
+        $data = $request->validated();
+
+        $logKeluar->update($data);
+
+        $this->syncProgressStatus($data['unit_id']);
+
+        return back()->with('success', 'Log keluar berhasil diperbarui.');
+    }
+
+    public function destroyKeluar(LogKeluarHarian $logKeluar)
+    {
+        $unitId = $logKeluar->unit_id;
+
+        $logKeluar->delete();
+
+        $this->syncProgressStatus($unitId);
+
+        return back()->with('success', 'Log keluar berhasil dihapus.');
+    }
+
+    private function syncProgressStatus(int $unitId): void
+    {
+        $unit = Unit::findOrFail($unitId);
 
         $progressTerakhir = ProgressUnit::where('unit_id', $unit->id)
             ->latest('tanggal_update')
@@ -60,7 +103,5 @@ class LogGudangController extends Controller
 
             $progressTerakhir->update(['status' => $hasil['status']]);
         }
-
-        return back()->with('success', 'Log keluar berhasil ditambahkan.');
     }
 }
