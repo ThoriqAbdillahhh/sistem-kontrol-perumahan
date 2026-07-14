@@ -16,38 +16,43 @@ class ProfileController extends Controller
     /**
      * Halaman Profile
      */
-    public function index(Request $request): Response
-    {
-        $user = $request->user()->load('roles');
+   public function index(Request $request): Response
+{
+    $user = $request->user()->load('roles');
 
-        return Inertia::render('Profile/Index', [
-            'user' => [
-                'name'         => $user->name,
-                'username'     => $user->username,
-                'email'        => $user->email,
-                'role'         => $user->roles->first()?->name,
-                'is_active'    => $user->is_active,
-                'last_login'   => $user->last_login_at,
-                'permissions'  => $user->getPermissionNames()->values(),
-            ],
-        ]);
-    }
+    return Inertia::render('Profile/Index', [
+        'user' => [
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'role' => $user->roles->first()?->name ?? '-',
+            'is_active' => $user->is_active,
+            'last_login' => $user->last_login_at,
+            'permissions' => $user
+            ->getAllPermissions()
+            ->pluck('name')
+            ->values(),
+                ],
+    ]);
+}
 
     /**
      * Update Profile
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
-    {
-        $request->user()->fill($request->validated());
+public function update(ProfileUpdateRequest $request): RedirectResponse
+{
+    $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
+    $user->fill($request->validated());
 
-        $request->user()->save();
-
-        return Redirect::route('profile');
+    if ($user->isDirty('email')) {
+        $user->email_verified_at = null;
     }
+
+    $user->save();
+
+    return back()->with('success', 'Profil berhasil diperbarui.');
+}
 
     /**
      * Hapus akun

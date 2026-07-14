@@ -77,6 +77,7 @@ class UserRoleController extends Controller
                 Rule::unique('users', 'email')->ignore($user->id)
             ],
             'password'  => ['nullable', 'string', 'min:8'],
+            'role'      => ['nullable', 'string', 'exists:roles,name'],
             'is_active' => ['boolean'],
         ]);
 
@@ -89,6 +90,10 @@ class UserRoleController extends Controller
                 ? ['password' => Hash::make($data['password'])]
                 : []),
         ]);
+
+        if (!empty($data['role'])) {
+            $user->syncRoles($data['role']);
+        }
 
         return back();
     }

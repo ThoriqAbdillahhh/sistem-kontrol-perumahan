@@ -51,12 +51,9 @@ export default function UserFormModal({ open, mode, user, roles, onClose }) {
             username: form.username,
             email: form.email,
             password: form.password,
+            role: form.role,
             is_active: form.status === "Active",
         };
-
-        if (mode === "create") {
-            payload.role = form.role;
-        }
 
         const options = {
             preserveScroll: true,

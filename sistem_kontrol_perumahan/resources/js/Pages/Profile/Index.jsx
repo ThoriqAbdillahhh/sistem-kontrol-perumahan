@@ -1,5 +1,8 @@
+import { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage } from "@inertiajs/react";
+import UpdatePasswordModal from "@/Components/Profile/UpdatePasswordModal";
+import UpdateProfileModal from "@/Components/Profile/UpdateProfileModal";
 import {
     Pencil,
     KeyRound,
@@ -15,6 +18,21 @@ import {
 
 export default function Index() {
     const { user } = usePage().props;
+
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+
+    // Dibuka lewat setTimeout supaya event klik tombol ini benar-benar
+    // selesai diproses dulu sebelum Headless UI Dialog memasang listener
+    // "klik di luar". Tanpa ini, klik yang sama yang membuka modal bisa
+    // ikut kedeteksi sebagai "klik di luar" dan modal langsung tertutup lagi.
+    const openPasswordModal = () => {
+        setTimeout(() => setShowPasswordModal(true), 0);
+    };
+
+    const openProfileModal = () => {
+        setTimeout(() => setShowProfileModal(true), 0);
+    };
 
     const initials = user.name
         ?.split(" ")
@@ -100,7 +118,10 @@ export default function Index() {
                                 Informasi Akun
                             </h2>
 
-                            <button className="flex items-center gap-2 rounded-full border px-5 py-2 font-semibold hover:bg-slate-50">
+                            <button
+                                onClick={openProfileModal}
+                                className="flex items-center gap-2 rounded-full border px-5 py-2 font-semibold hover:bg-slate-50"
+                            >
                                 <Pencil size={18} />
                                 Edit
                             </button>
@@ -129,7 +150,10 @@ export default function Index() {
                         <div className="mb-8 flex items-center justify-between">
                             <h2 className="text-3xl font-bold">Keamanan</h2>
 
-                            <button className="flex items-center gap-2 rounded-full border px-5 py-2 font-semibold hover:bg-slate-50">
+                            <button
+                                onClick={openPasswordModal}
+                                className="flex items-center gap-2 rounded-full border px-5 py-2 font-semibold hover:bg-slate-50"
+                            >
                                 <KeyRound size={18} />
                                 Ganti Password
                             </button>
@@ -181,6 +205,17 @@ export default function Index() {
                     </div>
                 </div>
             </div>
+
+            <UpdatePasswordModal
+                show={showPasswordModal}
+                onClose={() => setShowPasswordModal(false)}
+            />
+
+            <UpdateProfileModal
+                show={showProfileModal}
+                onClose={() => setShowProfileModal(false)}
+                user={user}
+            />
         </AuthenticatedLayout>
     );
 }

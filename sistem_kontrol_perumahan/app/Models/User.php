@@ -25,6 +25,8 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
+    protected string $guard_name = 'web';
+
     protected function casts(): array
     {
         return [

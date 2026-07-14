@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, usePage } from "@inertiajs/react";
 import {
@@ -53,6 +53,11 @@ function RoleBadge({ role }) {
 function StatusToggle({ user }) {
     const [enabled, setEnabled] = useState(user.isActive);
 
+    // Sync ketika data user di-refresh oleh Inertia (misalnya setelah edit)
+    useEffect(() => {
+        setEnabled(user.isActive);
+    }, [user.isActive]);
+
     const handleToggle = () => {
         router.patch(
             route("users.toggle", user.id),
@@ -75,7 +80,7 @@ function StatusToggle({ user }) {
             }`}
         >
             <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                className={`inline-block h-5.5 w-5.5 transform rounded-full bg-white transition ${
                     enabled ? "translate-x-5" : "translate-x-0.5"
                 }`}
             />
