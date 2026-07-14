@@ -1,13 +1,9 @@
 <?php
-<<<<<<< HEAD
-    namespace App\Services;
-=======
 namespace App\Services;
 
 use App\Models\Material;
 use App\Models\LogMasukGudang;
 use App\Models\LogKeluarHarian;
->>>>>>> main
 
 class StokGudangService
 {
