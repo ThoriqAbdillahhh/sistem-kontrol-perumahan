@@ -26,7 +26,7 @@ class Unit extends Model
 
     public function latestProgress()
     {
-        return $this->hasOne(ProgressUnit::class, 'unit_id')->latestOfMany('tanggal_update');
+        return $this->hasOne(ProgressUnit::class, 'unit_id')->latestOfMany('id');
     }
 
     public function logKeluar()
