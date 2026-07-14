@@ -4,7 +4,10 @@ namespace App\Services;
 use App\Models\Material;
 use App\Models\LogMasukGudang;
 use App\Models\LogKeluarHarian;
-    class StokGudangService
+
+class StokGudangService
+{
+    public function getStokGudang()
     {
         return Material::query()
             ->with('latestLogMasuk')
