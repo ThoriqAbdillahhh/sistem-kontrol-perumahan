@@ -17,7 +17,7 @@ class StoreLogMasukRequest extends FormRequest
             'tanggal'      => ['required', 'date'],
             'supplier'     => ['required', 'string', 'max:255'],
             'material_id'  => ['required', 'exists:materials,id'],
-            'qty'          => ['required', 'numeric', 'min:0.01'],
+            'qty'          => ['required', 'numeric', 'min:0'],
             'harga_satuan' => ['required', 'numeric', 'min:0'],
             'total_harga'  => ['required', 'numeric', 'min:0'],
             'keterangan'   => ['nullable', 'string'],

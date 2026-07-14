@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect  } from "react";
 import { Head, useForm, router, usePage } from "@inertiajs/react";
 import { Plus, Edit3, Trash2, X } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
@@ -42,11 +42,34 @@ export default function LogGudangIndex({
         total: "",
         keterangan: "",
     });
-
+    
     const form = tab === "masuk" ? masukForm : keluarForm;
     const selectedMaterial = (materials ?? []).find(
-    (m) => String(m.id) === String(form.data.material_id)
+        (m) => String(m.id) === String(form.data.material_id),
     );
+
+    // Log Keluar: saat material dipilih, harga otomatis ambil dari log masuk terakhir.
+    useEffect(() => {
+        if (tab !== "keluar") return;
+        if (!selectedMaterial) return;
+
+        keluarForm.setData("harga", selectedMaterial.harga_terakhir ?? 0);
+    }, [tab, selectedMaterial?.id]);
+
+    // Total Harga (masuk) otomatis = qty x harga_satuan.
+    useEffect(() => {
+        const qty = Number(masukForm.data.qty) || 0;
+        const harga = Number(masukForm.data.harga_satuan) || 0;
+        masukForm.setData("total_harga", qty * harga);
+    }, [masukForm.data.qty, masukForm.data.harga_satuan]);
+
+    // Total (keluar) otomatis = qty x harga.
+    useEffect(() => {
+        const qty = Number(keluarForm.data.qty) || 0;
+        const harga = Number(keluarForm.data.harga) || 0;
+        keluarForm.setData("total", qty * harga);
+    }, [keluarForm.data.qty, keluarForm.data.harga]);
+
 
     const filteredMasuk = useMemo(
         () =>
@@ -116,16 +139,16 @@ export default function LogGudangIndex({
         if (tab === "masuk") {
             editTarget
                 ? masukForm.put(
-                      route("log-gudang.masuk.update", editTarget.id),
-                      options,
-                  )
+                    route("log-gudang.masuk.update", editTarget.id),
+                    options,
+                )
                 : masukForm.post(route("log-gudang.masuk.store"), options);
         } else {
             editTarget
                 ? keluarForm.put(
-                      route("log-gudang.keluar.update", editTarget.id),
-                      options,
-                  )
+                    route("log-gudang.keluar.update", editTarget.id),
+                    options,
+                )
                 : keluarForm.post(route("log-gudang.keluar.store"), options);
         }
     }
@@ -561,10 +584,8 @@ export default function LogGudangIndex({
                                         <CurrencyField
                                             label="Harga"
                                             value={keluarForm.data.harga}
-                                            onChange={(v) =>
-                                                keluarForm.setData("harga", v)
-                                            }
                                             error={keluarForm.errors.harga}
+                                            readOnly
                                         />
                                     )}
                                 </div>
@@ -573,19 +594,15 @@ export default function LogGudangIndex({
                                     <CurrencyField
                                         label="Total Harga"
                                         value={masukForm.data.total_harga}
-                                        onChange={(v) =>
-                                            masukForm.setData("total_harga", v)
-                                        }
                                         error={masukForm.errors.total_harga}
+                                        readOnly
                                     />
                                 ) : (
                                     <CurrencyField
                                         label="Total"
                                         value={keluarForm.data.total}
-                                        onChange={(v) =>
-                                            keluarForm.setData("total", v)
-                                        }
                                         error={keluarForm.errors.total}
+                                        readOnly
                                     />
                                 )}
 
@@ -634,8 +651,17 @@ function Field({ label, value, onChange, placeholder, error, type = "text" }) {
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                onKeyDown={(e) => {
+                    if (
+                        type === "number" &&
+                        ["-", "+", "e", "E"].includes(e.key)
+                    ) {
+                        e.preventDefault();
+                    }
+                }}
                 placeholder={placeholder}
                 step={type === "number" ? "any" : undefined}
+                min={type === "number" ? 0 : undefined}
                 className="w-full rounded-xl border border-border bg-input-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
             {error && (
@@ -646,11 +672,13 @@ function Field({ label, value, onChange, placeholder, error, type = "text" }) {
 }
 
 // Input Rupiah: tampilan terformat "Rp 1.250.000", value yang dikirim ke form tetap angka mentah (string digit).
-function CurrencyField({ label, value, onChange, error }) {
+function CurrencyField({ label, value, onChange, error, readOnly = false, }) {
     function handleChange(e) {
-        const digits = e.target.value.replace(/\D/g, "");
-        onChange(digits);
-    }
+    if (readOnly) return;
+
+    const digits = e.target.value.replace(/\D/g, "");
+    onChange?.(digits);
+}
 
     const displayValue =
         value === "" || value === null || value === undefined
@@ -671,8 +699,11 @@ function CurrencyField({ label, value, onChange, error }) {
                     inputMode="numeric"
                     value={displayValue}
                     onChange={handleChange}
+                    readOnly={readOnly}
                     placeholder="0"
-                    className="w-full rounded-xl border border-border bg-input-background py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className={`w-full rounded-xl border border-border py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                        readOnly ? "bg-secondary" : "bg-input-background"
+                    }`}
                 />
             </div>
             {error && (
