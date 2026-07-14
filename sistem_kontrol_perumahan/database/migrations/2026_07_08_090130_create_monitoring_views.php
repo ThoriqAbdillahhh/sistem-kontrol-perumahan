@@ -73,9 +73,9 @@ return new class extends Migration
                 COALESCE(SUM(lk.qty),0) AS aktual,
 
                 CASE
-                    WHEN COALESCE(SUM(lk.qty),0) <= mpd.qty_standar
-                    THEN 'AMAN'
-                    ELSE 'WASTE'
+                    WHEN COALESCE(SUM(lk.qty),0) > mpd.qty_standar * mpd.batas_boros THEN 'BOROS'
+                    WHEN COALESCE(SUM(lk.qty),0) > mpd.qty_standar * mpd.batas_warning THEN 'WARNING'
+                    ELSE 'AMAN'
                 END AS analisa
 
             FROM progress_unit pu
@@ -101,16 +101,15 @@ return new class extends Migration
                 AND lk.material_id = mpd.material_id
 
             GROUP BY
-
-                pu.unit_id,
-                u.nama_unit,
-                pu.progress_percent,
-
-                mp.tahap_pekerjaan,
-
-                mpd.material_id,
-                m.nama_material,
-                mpd.qty_standar
+            pu.unit_id,
+            u.nama_unit,
+            pu.progress_percent,
+            mp.tahap_pekerjaan,
+            mpd.material_id,
+            m.nama_material,
+            mpd.qty_standar,
+            mpd.batas_warning,
+            mpd.batas_boros
         ");
     }
 

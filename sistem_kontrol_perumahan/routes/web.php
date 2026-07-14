@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LogGudangController;
+use App\Http\Controllers\ProgressController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -53,6 +54,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/keluar/{logKeluar}', [LogGudangController::class, 'updateKeluar'])->name('keluar.update');
         Route::delete('/keluar/{logKeluar}', [LogGudangController::class, 'destroyKeluar'])->name('keluar.destroy');
     });
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
+    Route::post('/progress', [ProgressController::class, 'store'])->name('progress.store');
+    // TODO: middleware role -> ->middleware('role:Admin|Super Admin')
 });
 
 Route::middleware('auth')->group(function () {
