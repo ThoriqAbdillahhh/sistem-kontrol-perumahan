@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProgressUnit;
 use App\Http\Requests\StoreLogKeluarRequest;
 use App\Http\Requests\StoreLogMasukRequest;
 use App\Models\LogKeluarHarian;
@@ -20,7 +21,15 @@ class LogGudangController extends Controller
             'logMasuk'  => LogMasukGudang::with('material')->orderByDesc('tanggal')->get(),
             'logKeluar' => LogKeluarHarian::with(['material', 'unit'])->orderByDesc('tanggal')->get(),
             'materials' => Material::orderBy('nama_material')
-                ->get(['id', 'kode_material as kode', 'nama_material as nama', 'satuan']),
+                            ->with('latestLogMasuk')
+                            ->get(['id', 'kode_material as kode', 'nama_material as nama', 'satuan'])
+                            ->map(fn ($m) => [
+                                'id'             => $m->id,
+                                'kode'           => $m->kode,
+                                'nama'           => $m->nama,
+                                'satuan'         => $m->satuan,
+                                'harga_terakhir' => $m->latestLogMasuk->harga_satuan ?? 0,
+                ]),
             'units'     => Unit::orderBy('nama_unit')->get(['id', 'nama_unit', 'zona']),
             'stok'      => (new StokGudangService())->stokSemuaMaterial(),
         ]);

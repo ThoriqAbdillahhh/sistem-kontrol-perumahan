@@ -1,4 +1,4 @@
-import { usePage } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import Sidebar from "@/Components/Sidebar";
 import RoleBadge from "@/Components/RoleBadge";
 import { Bell } from "lucide-react";
@@ -19,8 +19,8 @@ export default function AuthenticatedLayout({ children }) {
         role === "Owner"
             ? "Monitoring Eksekutif"
             : role === "Super Admin"
-                ? "Administrasi Sistem Penuh"
-                : "Operasional Gudang & Unit";
+              ? "Administrasi Sistem Penuh"
+              : "Operasional Gudang & Unit";
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -35,7 +35,9 @@ export default function AuthenticatedLayout({ children }) {
                             <h1 className="text-base font-extrabold leading-tight">
                                 Housing Construction ERP
                             </h1>
-                            <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                                {subtitle}
+                            </p>
                         </div>
 
                         <div className="flex items-center gap-4">
@@ -44,17 +46,22 @@ export default function AuthenticatedLayout({ children }) {
                                 <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-red-500" />
                             </button>
 
-                            <div className="hidden items-center gap-2 sm:flex">
+                            <Link
+                                href={route("profile")}
+                                className="hidden items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-muted sm:flex"
+                            >
                                 <div className="text-right">
                                     <p className="text-xs font-semibold leading-tight">
                                         {auth.user.name}
                                     </p>
+
                                     <RoleBadge role={role} />
                                 </div>
+
                                 <div className="grid size-9 place-items-center rounded-full bg-primary text-xs font-bold text-white">
                                     {initials}
                                 </div>
-                            </div>
+                            </Link>
                         </div>
                     </header>
 
