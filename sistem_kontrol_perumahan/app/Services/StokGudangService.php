@@ -51,6 +51,11 @@ class StokGudangService
         return $masuk - $keluar;
     }
 
+    public function stokSemuaMaterial()
+    {
+        return $this->getStokGudang();
+    }
+
     public function ringkasanDashboard()
     {
         return $this->stokSemuaMaterial()->map(function ($m) {
