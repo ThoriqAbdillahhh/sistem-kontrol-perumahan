@@ -14,18 +14,27 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Halaman Profile
      */
-    public function edit(Request $request): Response
+    public function index(Request $request): Response
     {
-        return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => session('status'),
+        $user = $request->user()->load('roles');
+
+        return Inertia::render('Profile/Index', [
+            'user' => [
+                'name'         => $user->name,
+                'username'     => $user->username,
+                'email'        => $user->email,
+                'role'         => $user->roles->first()?->name,
+                'is_active'    => $user->is_active,
+                'last_login'   => $user->last_login_at,
+                'permissions'  => $user->getPermissionNames()->values(),
+            ],
         ]);
     }
 
     /**
-     * Update the user's profile information.
+     * Update Profile
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
@@ -37,11 +46,11 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit');
+        return Redirect::route('profile');
     }
 
     /**
-     * Delete the user's account.
+     * Hapus akun
      */
     public function destroy(Request $request): RedirectResponse
     {

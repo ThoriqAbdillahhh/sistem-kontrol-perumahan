@@ -51,11 +51,18 @@ function RoleBadge({ role }) {
 }
 
 function StatusToggle({ user }) {
+    const [enabled, setEnabled] = useState(user.isActive);
+
     const handleToggle = () => {
         router.patch(
             route("users.toggle", user.id),
             {},
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setEnabled(!enabled);
+                },
+            },
         );
     };
 
@@ -63,13 +70,13 @@ function StatusToggle({ user }) {
         <button
             type="button"
             onClick={handleToggle}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-                user.isActive ? "bg-emerald-500" : "bg-slate-300"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                enabled ? "bg-emerald-500" : "bg-slate-300"
             }`}
         >
             <span
-                className={`inline-block h-6 w-5.5 transform rounded-full bg-white shadow transition duration-200 ${
-                    user.isActive ? "translate-x-5.5" : "translate-x-0"
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                    enabled ? "translate-x-5" : "translate-x-0.5"
                 }`}
             />
         </button>
