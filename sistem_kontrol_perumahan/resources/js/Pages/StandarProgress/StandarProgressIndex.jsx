@@ -1,0 +1,555 @@
+import { useMemo, useState } from "react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Pencil, Trash2, Plus, X, Search, Eye, ListChecks } from "lucide-react";
+
+function formatRange(row) {
+  return `${row.range_progress}%`;
+}
+
+// Props yang diharapkan dari controller:
+// - matrixRows: [{ id, batas_atas, tahap_pekerjaan, details: [{ id, material_id, kode_material, nama_material, satuan, qty_standar }] }]
+// - materials: [{ id, kode_material, nama_material, satuan }]  -> daftar lengkap utk picker "Tambah Material"
+// - canEdit: boolean, dihitung SERVER-SIDE dari auth()->user()->hasRole('Super Admin')
+// - tahapOptions: array of available tahap options
+export default function StandarProgressIndex({ matrixRows, materials, canEdit, tahapOptions }) {
+  const { flash } = usePage().props;
+
+  const sortedRows = useMemo(
+    () => [...matrixRows].sort((a, b) => a.batas_atas - b.batas_atas),
+    [matrixRows]
+  );
+
+  // ── State: modal tambah/edit Tahap (matrix_progress) ─────────────────
+  const [tahapDrawerOpen, setTahapDrawerOpen] = useState(false);
+  const [editTahap, setEditTahap] = useState(null); // null = mode tambah
+  const [deletingTahap, setDeletingTahap] = useState(null);
+
+  // ── State: modal kelola material per tahap (matrix_progress_detail) ──
+  const [detailPanelTahapId, setDetailPanelTahapId] = useState(null);
+  const [deletingDetail, setDeletingDetail] = useState(null);
+  const [materialQuery, setMaterialQuery] = useState("");
+  const [editingDetailId, setEditingDetailId] = useState(null);
+  const [editingQty, setEditingQty] = useState(0);
+
+  // Selalu diturunkan dari sortedRows (bukan snapshot) -> otomatis ikut
+  // ter-refresh begitu Inertia reload props setelah add/edit/delete detail.
+  const detailPanelTahap = sortedRows.find((r) => r.id === detailPanelTahapId) ?? null;
+
+  const tahapForm = useForm({
+    tahap_pekerjaan: "",
+  });
+
+  const detailForm = useForm({
+    material_id: "",
+    qty_standar: 0,
+  });
+
+  // ── Handlers: Tahap ────────────────────────────────────────────────────
+  function openAddTahap() {
+    setDetailPanelTahapId(null);
+    setEditTahap(null);
+    tahapForm.reset();
+    tahapForm.clearErrors();
+    tahapForm.setData({ tahap_pekerjaan: "" });
+    setTahapDrawerOpen(true);
+  }
+
+  function openEditTahap(row) {
+    setDetailPanelTahapId(null);
+    setEditTahap(row);
+    tahapForm.clearErrors();
+    tahapForm.setData({ tahap_pekerjaan: row.tahap_pekerjaan });
+    setTahapDrawerOpen(true);
+  }
+
+  function closeTahapDrawer() {
+    setTahapDrawerOpen(false);
+    setEditTahap(null);
+    tahapForm.clearErrors();
+  }
+
+  function handleSaveTahap(e) {
+    e.preventDefault();
+    if (editTahap) {
+      tahapForm.put(route("standar.update", editTahap.id), {
+        preserveScroll: true,
+        onSuccess: () => closeTahapDrawer(),
+      });
+    } else {
+      tahapForm.post(route("standar.store"), {
+        preserveScroll: true,
+        onSuccess: () => closeTahapDrawer(),
+      });
+    }
+  }
+
+  function confirmDeleteTahap() {
+    if (!deletingTahap) return;
+    router.delete(route("standar.destroy", deletingTahap.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        if (detailPanelTahapId === deletingTahap.id) setDetailPanelTahapId(null);
+        setDeletingTahap(null);
+      },
+    });
+  }
+
+  // ── Handlers: Panel Kelola Material per Tahap ─────────────────────────
+  function openDetailPanel(row) {
+    setTahapDrawerOpen(false);
+    setEditTahap(null);
+    setDetailPanelTahapId(row.id);
+    setMaterialQuery("");
+    setEditingDetailId(null);
+    detailForm.reset();
+    detailForm.clearErrors();
+  }
+
+  function closeDetailPanel() {
+    setDetailPanelTahapId(null);
+    setEditingDetailId(null);
+    detailForm.clearErrors();
+  }
+
+  // Material yang belum punya standar di tahap ini -> jadi pilihan dropdown tambah
+  const availableMaterials = useMemo(() => {
+    if (!detailPanelTahap) return [];
+    const usedIds = new Set(detailPanelTahap.details.map((d) => d.material_id));
+    const q = materialQuery.trim().toLowerCase();
+    return materials.filter((m) => {
+      if (usedIds.has(m.id)) return false;
+      if (!q) return true;
+      return (
+        m.kode_material.toLowerCase().includes(q) ||
+        m.nama_material.toLowerCase().includes(q)
+      );
+    });
+  }, [detailPanelTahap, materials, materialQuery]);
+
+  function handleAddDetail(e) {
+    e.preventDefault();
+    if (!detailPanelTahap || !detailForm.data.material_id) return;
+    detailForm.post(route("standar.detail.store", detailPanelTahap.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        detailForm.reset();
+        setMaterialQuery("");
+      },
+    });
+  }
+
+  function startEditQty(detail) {
+    setEditingDetailId(detail.id);
+    setEditingQty(detail.qty_standar);
+  }
+
+  function saveEditQty(detail) {
+    router.put(
+      route("standar.detail.update", detail.id),
+      { qty_standar: editingQty },
+      { preserveScroll: true, onSuccess: () => setEditingDetailId(null) }
+    );
+  }
+
+  function confirmDeleteDetail() {
+    if (!deletingDetail) return;
+    router.delete(route("standar.detail.destroy", deletingDetail.id), {
+      preserveScroll: true,
+      onSuccess: () => setDeletingDetail(null),
+    });
+  }
+
+  return (
+    <AuthenticatedLayout auth={usePage().props.auth}>
+      <Head title="Standar Progres Material" />
+
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold">Standar Progres Material</h1>
+            <p className="text-sm text-muted-foreground">
+              {canEdit
+                ? "Acuan pemakaian material kumulatif per milestone progres."
+                : "Standar acuan material (read-only)."}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {!canEdit && (
+              <span className="inline-flex items-center gap-1 rounded-xl border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
+                <Eye size={12} /> Read Only
+              </span>
+            )}
+            {canEdit && (
+              <button
+                onClick={openAddTahap}
+                className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white"
+              >
+                + Tambah Tahap
+              </button>
+            )}
+          </div>
+        </div>
+
+        {flash?.success && (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700">
+            {flash.success}
+          </div>
+        )}
+
+        {/* ── Table: Tahapan Pekerjaan ────────────────────────────── */}
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+          <h2 className="mb-4 font-bold">Tahapan Pekerjaan ({sortedRows.length})</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead className="bg-muted text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold">Range</th>
+                  <th className="px-4 py-3 text-left font-semibold">Tahap Pekerjaan</th>
+                  <th className="px-4 py-3 text-left font-semibold">Jumlah Material</th>
+                  <th className="px-4 py-3 text-right font-semibold">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedRows.map((row) => (
+                  <tr key={row.id} className="border-t border-border hover:bg-secondary/50">
+                    <td className="px-4 py-3 font-mono text-xs font-bold text-primary whitespace-nowrap">
+                      {formatRange(row)}
+                    </td>
+                    <td className="px-4 py-3 font-semibold">{row.tahap_pekerjaan}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-xs">
+                        {row.details.length} material
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => openDetailPanel(row)}
+                        title={canEdit ? "Kelola Material" : "Lihat Material"}
+                        className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      >
+                        <ListChecks size={16} />
+                      </button>
+                      {canEdit && (
+                        <>
+                          <button
+                            onClick={() => openEditTahap(row)}
+                            title="Edit"
+                            className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50 transition-colors"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => setDeletingTahap(row)}
+                            title="Hapus"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {sortedRows.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                      Belum ada tahap pekerjaan.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+            Qty pada setiap material bersifat <strong>kumulatif</strong> — total pemakaian yang diizinkan s.d.
+            milestone progres tersebut tercapai.
+          </div>
+        </div>
+      </div>
+
+      {/* ── Modal: Tambah / Edit Tahap ───────────────────────────── */}
+      {tahapDrawerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          onClick={closeTahapDrawer}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {editTahap ? "Edit Tahap" : "Tambah Tahap Baru"}
+              </h2>
+              <button
+                onClick={closeTahapDrawer}
+                className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTahap} className="space-y-4">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Tahap Pekerjaan
+                </span>
+
+                {editTahap ? (
+                  <div className="w-full rounded-xl border border-border bg-muted px-3 py-2.5 text-sm text-muted-foreground">
+                    {editTahap.tahap_pekerjaan} ({formatRange(editTahap)})
+                  </div>
+                ) : (
+                  <select
+                    value={tahapForm.data.tahap_pekerjaan}
+                    onChange={(e) => tahapForm.setData("tahap_pekerjaan", e.target.value)}
+                    className="w-full rounded-xl border border-border bg-input-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                  >
+                    <option value="">— Pilih tahap pekerjaan —</option>
+                    {tahapOptions.map((t) => (
+                      <option key={t.tahap_pekerjaan} value={t.tahap_pekerjaan}>
+                        {t.tahap_pekerjaan} ({t.range_progress}%)
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {tahapForm.errors.tahap_pekerjaan && (
+                  <span className="mt-1 block text-xs text-red-600">{tahapForm.errors.tahap_pekerjaan}</span>
+                )}
+              </label>
+
+              <p className="text-xs text-muted-foreground">
+                Batas atas & range progres mengikuti standar baku tahap yang dipilih.
+              </p>
+
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="submit"
+                  disabled={tahapForm.processing || (!editTahap && !tahapForm.data.tahap_pekerjaan)}
+                  className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white disabled:opacity-60"
+                >
+                  {tahapForm.processing ? "Menyimpan..." : "Simpan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeTahapDrawer}
+                  className="rounded-xl border border-border px-4 py-3 text-sm"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Kelola Material per Tahap ────────────────────────── */}
+      {detailPanelTahap && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          onClick={closeDetailPanel}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-1 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {canEdit ? "Kelola Material" : "Lihat Material"} — {detailPanelTahap.tahap_pekerjaan}
+              </h2>
+              <button
+                onClick={closeDetailPanel}
+                className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Range {formatRange(detailPanelTahap)}
+            </p>
+
+            <div className="space-y-2">
+              {detailPanelTahap.details.length === 0 && (
+                <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+                  Belum ada standar material di tahap ini.
+                </p>
+              )}
+              {detailPanelTahap.details.map((d) => (
+                <div key={d.id} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold">{d.nama_material}</p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{d.kode_material}</p>
+                  </div>
+
+                  {editingDetailId === d.id ? (
+                    <>
+                      <input
+                        type="number"
+                        min={0}
+                        autoFocus
+                        value={editingQty}
+                        onChange={(e) => setEditingQty(Number(e.target.value))}
+                        className="w-20 rounded-lg border border-border px-2 py-1 text-xs font-mono outline-none focus:border-primary"
+                      />
+                      <span className="w-8 text-[11px] text-muted-foreground">{d.satuan}</span>
+                      <button
+                        onClick={() => saveEditQty(d)}
+                        className="rounded-lg px-2 py-1 text-xs font-bold text-emerald-600 hover:bg-emerald-50"
+                      >
+                        Simpan
+                      </button>
+                      <button
+                        onClick={() => setEditingDetailId(null)}
+                        className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-secondary"
+                      >
+                        Batal
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-mono text-xs font-bold">{d.qty_standar}</span>
+                      <span className="w-8 text-[11px] text-muted-foreground">{d.satuan}</span>
+                      {canEdit && (
+                        <>
+                          <button
+                            onClick={() => startEditQty(d)}
+                            title="Edit qty"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={() => setDeletingDetail(d)}
+                            title="Hapus"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {canEdit && (
+              <form onSubmit={handleAddDetail} className="mt-5 space-y-2 border-t border-border pt-4">
+                <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Tambah Material
+                </span>
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 text-xs focus-within:border-primary">
+                  <Search size={14} className="shrink-0 text-muted-foreground" />
+                  <input
+                    value={materialQuery}
+                    onChange={(e) => setMaterialQuery(e.target.value)}
+                    placeholder="Cari material..."
+                    className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                <select
+                  value={detailForm.data.material_id}
+                  onChange={(e) => detailForm.setData("material_id", e.target.value)}
+                  className="w-full rounded-xl border border-border bg-input-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                >
+                  <option value="">— Pilih material —</option>
+                  {availableMaterials.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.kode_material} · {m.nama_material}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    value={detailForm.data.qty_standar}
+                    onChange={(e) => detailForm.setData("qty_standar", e.target.value)}
+                    placeholder="Qty standar"
+                    className="flex-1 rounded-xl border border-border bg-input-background px-3 py-2.5 text-sm font-mono outline-none focus:border-primary"
+                  />
+                  <button
+                    type="submit"
+                    disabled={detailForm.processing || !detailForm.data.material_id}
+                    className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50"
+                  >
+                    <Plus size={14} className="inline" /> Tambah
+                  </button>
+                </div>
+                {detailForm.errors.material_id && (
+                  <span className="block text-xs text-red-600">{detailForm.errors.material_id}</span>
+                )}
+                {detailForm.errors.qty_standar && (
+                  <span className="block text-xs text-red-600">{detailForm.errors.qty_standar}</span>
+                )}
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal konfirmasi hapus Tahap ─────────────────────────────── */}
+      {deletingTahap && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          onClick={() => setDeletingTahap(null)}
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-2 text-lg font-semibold text-slate-900">Hapus Tahap?</h2>
+            <p className="mb-6 text-sm text-slate-500">
+              Tahap <span className="font-medium text-slate-700">{deletingTahap.tahap_pekerjaan}</span> beserta{" "}
+              <span className="font-medium text-slate-700">{deletingTahap.details.length} standar material</span> di
+              dalamnya akan dihapus permanen.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingTahap(null)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDeleteTahap}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal konfirmasi hapus standar material ─────────────────── */}
+      {deletingDetail && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          onClick={() => setDeletingDetail(null)}
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-2 text-lg font-semibold text-slate-900">Hapus Standar Material?</h2>
+            <p className="mb-6 text-sm text-slate-500">
+              Standar <span className="font-medium text-slate-700">{deletingDetail.nama_material}</span> pada tahap
+              ini akan dihapus.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingDetail(null)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDeleteDetail}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </AuthenticatedLayout>
+  );
+}
