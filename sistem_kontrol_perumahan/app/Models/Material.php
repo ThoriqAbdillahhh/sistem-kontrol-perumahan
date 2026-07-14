@@ -20,4 +20,10 @@ class Material extends Model
     {
         return $this->hasMany(LogKeluarHarian::class);
     }
+
+    public function latestLogMasuk()
+    {
+    return $this->hasOne(\App\Models\LogMasukGudang::class)
+    ->latestOfMany(['tanggal', 'id']);
+    }
 }
