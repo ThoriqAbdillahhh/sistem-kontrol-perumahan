@@ -183,7 +183,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
             {canEdit && (
               <button
                 onClick={openAddTahap}
-                className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white"
+                className="cursor-pointer rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white"
               >
                 + Tambah Tahap
               </button>
@@ -226,7 +226,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
                       <button
                         onClick={() => openDetailPanel(row)}
                         title={canEdit ? "Kelola Material" : "Lihat Material"}
-                        className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                        className="cursor-pointer mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                       >
                         <ListChecks size={16} />
                       </button>
@@ -235,14 +235,14 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
                           <button
                             onClick={() => openEditTahap(row)}
                             title="Edit"
-                            className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50 transition-colors"
+                            className="cursor-pointer mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50 transition-colors"
                           >
                             <Pencil size={16} />
                           </button>
                           <button
                             onClick={() => setDeletingTahap(row)}
                             title="Hapus"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                            className="cursor-pointer inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -284,7 +284,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
               </h2>
               <button
                 onClick={closeTahapDrawer}
-                className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+                className="cursor-pointer rounded-lg p-1 text-muted-foreground hover:text-foreground"
               >
                 <X size={16} />
               </button>
@@ -361,7 +361,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
               </h2>
               <button
                 onClick={closeDetailPanel}
-                className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+                className="cursor-pointer rounded-lg p-1 text-muted-foreground hover:text-foreground"
               >
                 <X size={16} />
               </button>
@@ -402,7 +402,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
                       </button>
                       <button
                         onClick={() => setEditingDetailId(null)}
-                        className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-secondary"
+                        className="cursor-pointer rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-secondary"
                       >
                         Batal
                       </button>
@@ -416,14 +416,14 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
                           <button
                             onClick={() => startEditQty(d)}
                             title="Edit qty"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50"
+                            className="cursor-pointer inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-600 hover:bg-sky-50"
                           >
                             <Pencil size={13} />
                           </button>
                           <button
                             onClick={() => setDeletingDetail(d)}
                             title="Hapus"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
+                            className="cursor-pointer inline-flex h-7 w-7 items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -506,13 +506,13 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setDeletingTahap(null)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+                className="cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-sm"
               >
                 Batal
               </button>
               <button
                 onClick={confirmDeleteTahap}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
                 Ya, Hapus
               </button>
@@ -536,13 +536,13 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setDeletingDetail(null)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+                className="cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-sm"
               >
                 Batal
               </button>
               <button
                 onClick={confirmDeleteDetail}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
                 Ya, Hapus
               </button>
