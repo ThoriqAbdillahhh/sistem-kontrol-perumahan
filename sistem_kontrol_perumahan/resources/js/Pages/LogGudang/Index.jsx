@@ -26,6 +26,8 @@ export default function LogGudangIndex({
     const [search, setSearch] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyData, setHistoryData] = useState([]);
@@ -221,6 +223,7 @@ export default function LogGudangIndex({
                                 onClick={() => {
                                     setTab(t);
                                     setModalOpen(false);
+                                    setDeleteTarget(null);
                                 }}
                                 className={`cursor-pointer rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
                                     tab === t
@@ -682,6 +685,24 @@ export default function LogGudangIndex({
                         </form>
                     </div>
                 )}
+
+                <ConfirmDialog
+                    open={!!deleteTarget}
+                    title="Hapus data log gudang?"
+                    message={
+                        deleteTarget
+                            ? `Data ${
+                                  tab === "masuk" ? "masuk" : "keluar"
+                              } untuk ${deleteTarget?.material?.nama_material ?? "material ini"} akan dihapus.`
+                            : ""
+                    }
+                    confirmText="Ya, Hapus"
+                    cancelText="Batal"
+                    danger
+                    processing={deleting}
+                    onConfirm={confirmDelete}
+                    onCancel={() => setDeleteTarget(null)}
+                />
 
                 {historyModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
