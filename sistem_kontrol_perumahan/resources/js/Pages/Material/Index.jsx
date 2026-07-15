@@ -368,7 +368,7 @@ function confirmDelete() {
       {/* ── Modal: Tambah / Edit Material ───────────────────────── */}
       {drawerOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={closeDrawer}
         >
           <div
@@ -486,7 +486,7 @@ function confirmDelete() {
 
       {deletingMaterial && (
     <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
         onClick={() => setDeletingMaterial(null)}
     >
         <div
