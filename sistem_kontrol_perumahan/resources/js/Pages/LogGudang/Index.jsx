@@ -6,6 +6,7 @@ import SectionHeader from "@/Components/SectionHeader";
 import TableCard from "@/Components/TableCard";
 import SearchBar from "@/Components/SearchBar";
 import MaterialSelect from "@/Components/MaterialSelect";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 
 function formatRupiah(v) {
     return "Rp " + Number(v ?? 0).toLocaleString("id-ID");
@@ -64,7 +65,7 @@ export default function LogGudangIndex({
         total: "",
         keterangan: "",
     });
-    
+
     const form = tab === "masuk" ? masukForm : keluarForm;
     const selectedMaterial = (materials ?? []).find(
         (m) => String(m.id) === String(form.data.material_id),
@@ -91,7 +92,6 @@ export default function LogGudangIndex({
         const harga = Number(keluarForm.data.harga) || 0;
         keluarForm.setData("total", qty * harga);
     }, [keluarForm.data.qty, keluarForm.data.harga]);
-
 
     const filteredMasuk = useMemo(
         () =>
@@ -161,27 +161,38 @@ export default function LogGudangIndex({
         if (tab === "masuk") {
             editTarget
                 ? masukForm.put(
-                    route("log-gudang.masuk.update", editTarget.id),
-                    options,
-                )
+                      route("log-gudang.masuk.update", editTarget.id),
+                      options,
+                  )
                 : masukForm.post(route("log-gudang.masuk.store"), options);
         } else {
             editTarget
                 ? keluarForm.put(
-                    route("log-gudang.keluar.update", editTarget.id),
-                    options,
-                )
+                      route("log-gudang.keluar.update", editTarget.id),
+                      options,
+                  )
                 : keluarForm.post(route("log-gudang.keluar.store"), options);
         }
     }
 
     function handleDelete(row) {
-        if (!confirm("Hapus log ini?")) return;
+        setDeleteTarget(row);
+    }
+
+    function confirmDelete() {
+        if (!deleteTarget) return;
+        setDeleting(true);
         const routeName =
             tab === "masuk"
                 ? "log-gudang.masuk.destroy"
                 : "log-gudang.keluar.destroy";
-        router.delete(route(routeName, row.id), { preserveScroll: true });
+        router.delete(route(routeName, deleteTarget.id), {
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleting(false);
+                setDeleteTarget(null);
+            },
+        });
     }
 
     return (
@@ -293,7 +304,9 @@ export default function LogGudangIndex({
                                                     {r.material?.nama_material}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
-                                                    {r.qty}
+                                                    {Number(
+                                                        r.qty,
+                                                    ).toLocaleString("id-ID")}
                                                 </td>
                                                 <td className="px-4 py-3 text-xs">
                                                     {r.material?.satuan}
@@ -408,7 +421,9 @@ export default function LogGudangIndex({
                                                     {r.material?.nama_material}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
-                                                    {r.qty}
+                                                    {Number(
+                                                        r.qty,
+                                                    ).toLocaleString("id-ID")}
                                                 </td>
                                                 <td className="px-4 py-3 text-xs">
                                                     {r.material?.satuan}
