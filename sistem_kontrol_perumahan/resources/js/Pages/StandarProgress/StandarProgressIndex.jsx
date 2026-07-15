@@ -271,7 +271,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
       {/* ── Modal: Tambah / Edit Tahap ───────────────────────────── */}
       {tahapDrawerOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={closeTahapDrawer}
         >
           <div
@@ -348,7 +348,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
       {/* ── Modal: Kelola Material per Tahap ────────────────────────── */}
       {detailPanelTahap && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={closeDetailPanel}
         >
           <div
@@ -493,7 +493,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
       {/* ── Modal konfirmasi hapus Tahap ─────────────────────────────── */}
       {deletingTahap && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={() => setDeletingTahap(null)}
         >
           <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
