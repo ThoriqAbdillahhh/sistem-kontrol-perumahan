@@ -1,4 +1,4 @@
-import { Link, usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import {
     Home,
     Building2,
@@ -10,10 +10,25 @@ import {
     LogOut,
 } from "lucide-react";
 import RoleBadge from "@/Components/RoleBadge";
+import ConfirmDialog from "@/Components/ConfirmDialog";
+import { useState } from "react";
 
 export default function Sidebar() {
     const { auth } = usePage().props;
     const role = auth.user.roles?.[0] ?? "";
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
+
+    const handleLogout = () => {
+        setLoggingOut(true);
+        router.post(
+            route("logout"),
+            {},
+            {
+                onFinish: () => setLoggingOut(false),
+            },
+        );
+    };
 
     const menus = [
         {
@@ -75,8 +90,12 @@ export default function Sidebar() {
                     <Building2 size={20} />
                 </div>
                 <div>
-                    <p className="text-sm font-bold text-white">EstateControl</p>
-                    <p className="text-[11px] text-sidebar-foreground/50">Monitoring Perumahan</p>
+                    <p className="text-sm font-bold text-white">
+                        EstateControl
+                    </p>
+                    <p className="text-[11px] text-sidebar-foreground/50">
+                        Monitoring Perumahan
+                    </p>
                 </div>
             </div>
 
@@ -91,16 +110,18 @@ export default function Sidebar() {
                         const Icon = menu.icon;
                         const routeExists = route().has(menu.route);
                         const href = routeExists ? route(menu.route) : "#";
-                        const isActive = routeExists && route().current(menu.route);
+                        const isActive =
+                            routeExists && route().current(menu.route);
 
                         return (
                             <Link
                                 key={menu.title}
                                 href={href}
                                 className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 transition-all
-                                    ${isActive
-                                        ? "bg-primary text-white shadow-md"
-                                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
+                                    ${
+                                        isActive
+                                            ? "bg-primary text-white shadow-md"
+                                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
                                     }
                                     ${!routeExists ? "opacity-40 cursor-not-allowed" : ""}`}
                             >
@@ -125,17 +146,27 @@ export default function Sidebar() {
                         </div>
                     </div>
 
-                    <Link
-                        href={route("logout")}
-                        method="post"
-                        as="button"
-                        className="rounded-lg p-1.5 text-sidebar-foreground/50 hover:bg-red-500/20 hover:text-red-300"
+                    <button
+                        type="button"
+                        onClick={() => setShowLogoutConfirm(true)}
+                        className="cursor-pointer rounded-lg p-1.5 text-sidebar-foreground/50 hover:bg-red-500/20 hover:text-red-300"
                         title="Keluar"
                     >
                         <LogOut size={15} />
-                    </Link>
+                    </button>
                 </div>
             </div>
+            <ConfirmDialog
+                open={showLogoutConfirm}
+                title="Keluar dari akun?"
+                message="Anda perlu login kembali untuk mengakses sistem."
+                confirmText="Ya, Keluar"
+                cancelText="Batal"
+                danger
+                processing={loggingOut}
+                onConfirm={handleLogout}
+                onCancel={() => setShowLogoutConfirm(false)}
+            />
         </aside>
     );
 }
