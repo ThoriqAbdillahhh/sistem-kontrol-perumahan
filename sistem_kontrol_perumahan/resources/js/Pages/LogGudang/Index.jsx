@@ -1,11 +1,12 @@
 import { useMemo, useState, useEffect  } from "react";
 import { Head, useForm, router, usePage } from "@inertiajs/react";
-import { Plus, Edit3, Trash2, X } from "lucide-react";
+import { Plus, Edit3, Trash2, X, History } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import SectionHeader from "@/Components/SectionHeader";
 import TableCard from "@/Components/TableCard";
 import SearchBar from "@/Components/SearchBar";
 import MaterialSelect from "@/Components/MaterialSelect";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 
 function formatRupiah(v) {
     return "Rp " + Number(v ?? 0).toLocaleString("id-ID");
@@ -18,10 +19,34 @@ export default function LogGudangIndex({
     units,
     stok,
 }) {
+    const { auth } = usePage().props;
+    const userRole = auth?.user?.roles?.[0] ?? "";
+
     const [tab, setTab] = useState("masuk");
     const [search, setSearch] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [historyData, setHistoryData] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    function openHistory() {
+        setHistoryModalOpen(true);
+        setLoadingHistory(true);
+        fetch(route("log-gudang.history"))
+            .then((res) => res.json())
+            .then((data) => {
+                setHistoryData(data);
+                setLoadingHistory(false);
+            })
+            .catch((err) => {
+                console.error(err);
+                setLoadingHistory(false);
+            });
+    }
 
     const masukForm = useForm({
         tanggal: "",
@@ -42,7 +67,7 @@ export default function LogGudangIndex({
         total: "",
         keterangan: "",
     });
-    
+
     const form = tab === "masuk" ? masukForm : keluarForm;
     const selectedMaterial = (materials ?? []).find(
         (m) => String(m.id) === String(form.data.material_id),
@@ -69,7 +94,6 @@ export default function LogGudangIndex({
         const harga = Number(keluarForm.data.harga) || 0;
         keluarForm.setData("total", qty * harga);
     }, [keluarForm.data.qty, keluarForm.data.harga]);
-
 
     const filteredMasuk = useMemo(
         () =>
@@ -139,27 +163,38 @@ export default function LogGudangIndex({
         if (tab === "masuk") {
             editTarget
                 ? masukForm.put(
-                    route("log-gudang.masuk.update", editTarget.id),
-                    options,
-                )
+                      route("log-gudang.masuk.update", editTarget.id),
+                      options,
+                  )
                 : masukForm.post(route("log-gudang.masuk.store"), options);
         } else {
             editTarget
                 ? keluarForm.put(
-                    route("log-gudang.keluar.update", editTarget.id),
-                    options,
-                )
+                      route("log-gudang.keluar.update", editTarget.id),
+                      options,
+                  )
                 : keluarForm.post(route("log-gudang.keluar.store"), options);
         }
     }
 
     function handleDelete(row) {
-        if (!confirm("Hapus log ini?")) return;
+        setDeleteTarget(row);
+    }
+
+    function confirmDelete() {
+        if (!deleteTarget) return;
+        setDeleting(true);
         const routeName =
             tab === "masuk"
                 ? "log-gudang.masuk.destroy"
                 : "log-gudang.keluar.destroy";
-        router.delete(route(routeName, row.id), { preserveScroll: true });
+        router.delete(route(routeName, deleteTarget.id), {
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleting(false);
+                setDeleteTarget(null);
+            },
+        });
     }
 
     return (
@@ -172,13 +207,23 @@ export default function LogGudangIndex({
                         title="Log Transaksi Gudang"
                         sub="Masuk dari supplier · Keluar ke unit — stok otomatis terbarui."
                     />
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        {userRole === "Super Admin" && (
+                            <button
+                                onClick={openHistory}
+                                className="cursor-pointer rounded-xl border border-border bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-primary transition flex items-center gap-2"
+                            >
+                                <History size={16} />
+                                Riwayat Perubahan
+                            </button>
+                        )}
                         {["masuk", "keluar"].map((t) => (
                             <button
                                 key={t}
                                 onClick={() => {
                                     setTab(t);
                                     setModalOpen(false);
+                                    setDeleteTarget(null);
                                 }}
                                 className={`cursor-pointer rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
                                     tab === t
@@ -262,7 +307,9 @@ export default function LogGudangIndex({
                                                     {r.material?.nama_material}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
-                                                    {r.qty}
+                                                    {Number(
+                                                        r.qty,
+                                                    ).toLocaleString("id-ID")}
                                                 </td>
                                                 <td className="px-4 py-3 text-xs">
                                                     {r.material?.satuan}
@@ -377,7 +424,9 @@ export default function LogGudangIndex({
                                                     {r.material?.nama_material}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
-                                                    {r.qty}
+                                                    {Number(
+                                                        r.qty,
+                                                    ).toLocaleString("id-ID")}
                                                 </td>
                                                 <td className="px-4 py-3 text-xs">
                                                     {r.material?.satuan}
@@ -634,6 +683,125 @@ export default function LogGudangIndex({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                )}
+
+                <ConfirmDialog
+                    open={!!deleteTarget}
+                    title="Hapus data log gudang?"
+                    message={
+                        deleteTarget
+                            ? `Data ${
+                                  tab === "masuk" ? "masuk" : "keluar"
+                              } untuk ${deleteTarget?.material?.nama_material ?? "material ini"} akan dihapus.`
+                            : ""
+                    }
+                    confirmText="Ya, Hapus"
+                    cancelText="Batal"
+                    danger
+                    processing={deleting}
+                    onConfirm={confirmDelete}
+                    onCancel={() => setDeleteTarget(null)}
+                />
+
+                {historyModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+                        <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl flex flex-col max-h-[85vh]">
+                            <div className="flex items-center justify-between pb-4 border-b border-border">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                                        <History className="text-primary" size={20} />
+                                        Riwayat Perubahan Log Gudang
+                                    </h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setHistoryModalOpen(false)}
+                                    className="cursor-pointer rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="mt-4 flex-1 overflow-y-auto pr-1 space-y-4 min-h-[300px]">
+                                {loadingHistory ? (
+                                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        <span className="mt-2 text-sm">Memuat data riwayat...</span>
+                                    </div>
+                                ) : historyData.length === 0 ? (
+                                    <div className="text-center py-12 text-muted-foreground text-sm">
+                                        Belum ada riwayat perubahan yang tercatat.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {historyData.map((item) => {
+                                            const actionColors = {
+                                                create: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                                                update: "bg-amber-50 text-amber-700 border-amber-200",
+                                                delete: "bg-red-50 text-red-700 border-red-200",
+                                            };
+                                            const actionLabels = {
+                                                create: "TAMBAH",
+                                                update: "EDIT",
+                                                delete: "HAPUS",
+                                            };
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className="border border-border rounded-xl p-4 space-y-2 bg-card hover:shadow-sm transition"
+                                                >
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-semibold text-sm text-foreground">
+                                                                {item.user_name}
+                                                            </span>
+                                                            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
+                                                                {item.user_role}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[11px] font-mono text-muted-foreground">
+                                                            {item.created_at}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${actionColors[item.action] || "bg-gray-50"}`}>
+                                                            {actionLabels[item.action] || item.action.toUpperCase()}
+                                                        </span>
+                                                        <p className="text-xs font-semibold text-gray-800">
+                                                            {item.summary}
+                                                        </p>
+                                                    </div>
+
+                                                    {item.details && item.details.length > 0 && (
+                                                        <div className="bg-muted/40 rounded-lg p-3 border border-border/50">
+                                                            <ul className="list-disc list-inside space-y-1">
+                                                                {item.details.map((detail, idx) => (
+                                                                    <li key={idx} className="text-xs text-muted-foreground">
+                                                                        {detail}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-6 pt-4 border-t border-border flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => setHistoryModalOpen(false)}
+                                    className="cursor-pointer rounded-xl border border-border px-5 py-2.5 text-sm bg-white hover:bg-gray-50 transition"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

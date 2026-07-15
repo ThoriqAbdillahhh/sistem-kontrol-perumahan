@@ -6,23 +6,17 @@ import {
     Building2,
     Check,
     AlertTriangle,
+    AlertCircle,
+    ClipboardList,
     TrendingUp,
     Search,
 } from "lucide-react";
-    
-function widthClass(v) {
-    if (v >= 100) return "w-full";
-    if (v >= 80) return "w-4/5";
-    if (v >= 70) return "w-[70%]";
-    if (v >= 60) return "w-3/5";
-    if (v >= 45) return "w-[45%]";
-    return "w-1/3";
-}
 
 function StatusBadge({ value }) {
     const map = {
         Aman: "bg-emerald-50 text-emerald-700 ring-emerald-200",
         Selesai: "bg-sky-50 text-sky-700 ring-sky-200",
+        Warning: "bg-amber-50 text-amber-700 ring-amber-200",
         Boros: "bg-red-50 text-red-700 ring-red-200",
     };
     return (
@@ -39,9 +33,25 @@ function formatRupiahJt(value) {
 
 const STOK_LIMIT = 5;
 
+// Pastikan progress dibatasi 0-100 supaya style width tidak "meledak"
+function clampProgress(v) {
+    if (typeof v !== "number" || Number.isNaN(v)) return 0;
+    return Math.min(100, Math.max(0, v));
+}
+
+function progressBarColor(statusMaterial) {
+    if (statusMaterial === "Selesai") return "bg-sky-500";
+    if (statusMaterial === "Boros") return "bg-red-500";
+    if (statusMaterial === "Warning") return "bg-amber-400";
+    return "bg-emerald-500";
+}
+
 export default function Dashboard({ kpi, rows, stokGudang }) {
     const [stokQuery, setStokQuery] = useState("");
     const [stokVisible, setStokVisible] = useState(STOK_LIMIT);
+
+    const [unitQuery, setUnitQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("Semua Status");
 
     const filteredStok = stokGudang.filter((s) =>
         s.nama.toLowerCase().includes(stokQuery.toLowerCase())
@@ -49,9 +59,48 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
     const visibleStok = filteredStok.slice(0, stokVisible);
     const hasMore = filteredStok.length > stokVisible;
 
+    // Filter tabel "Progres Unit" berdasarkan search + status
+    const filteredRows = rows.filter((row) => {
+        const q = unitQuery.toLowerCase();
+        const matchesQuery =
+            !q ||
+            row.id?.toLowerCase().includes(q) ||
+            row.zona?.toLowerCase().includes(q) ||
+            row.tukang?.toLowerCase().includes(q);
+
+        const matchesStatus =
+            statusFilter === "Semua Status" ||
+            row.status === statusFilter ||
+            row.statusMaterial === statusFilter;
+
+        return matchesQuery && matchesStatus;
+    });
+
+    const statusOptions = [
+        "Semua Status",
+        "Aktif",
+        "Non Aktif",
+        "Aman",
+        "Warning",
+        "Boros",
+        "Selesai",
+    ];
+
     const cards = [
         {
-            title: "Total Unit Aktif",
+            title: "Total Unit",
+            value: `${kpi.totalUnit} Unit`,
+            meta: "Seluruh unit terdaftar",
+            icon: <Building2 size={18} />,
+        },
+        {
+            title: "Unit Sudah Diinput",
+            value: `${kpi.unitDiinput} Unit`,
+            meta: `dari ${kpi.totalUnit} unit`,
+            icon: <ClipboardList size={18} />,
+        },
+        {
+            title: "Unit Aktif",
             value: `${kpi.unitAktif} Unit`,
             meta: `${kpi.totalUnit} total unit`,
             icon: <Building2 size={18} />,
@@ -64,11 +113,18 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
             tone: "up",
         },
         {
+            title: "Unit Warning",
+            value: `${kpi.unitWarning} Unit`,
+            meta: "Mendekati batas standar",
+            icon: <AlertCircle size={18} />,
+            tone: "warn",
+        },
+        {
             title: "Unit Boros Material",
             value: `${kpi.unitBoros} Unit`,
             meta: "Pemakaian over standar",
             icon: <AlertTriangle size={18} />,
-            tone: "warn",
+            tone: "down",
         },
         {
             title: "Pengeluaran Bulan Ini",
@@ -84,7 +140,7 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
             <Head title="Dashboard" />
 
             <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {cards.map((c) => (
                         <div
                             key={c.title}
@@ -124,6 +180,38 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                             <h2 className="font-bold">
                                 Progres Unit — Operasional
                             </h2>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="relative">
+                                    <Search
+                                        size={13}
+                                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Cari unit, zona, tukang..."
+                                        value={unitQuery}
+                                        onChange={(e) =>
+                                            setUnitQuery(e.target.value)
+                                        }
+                                        className="w-56 rounded-lg border border-border bg-white py-1.5 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                    />
+                                </div>
+
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) =>
+                                        setStatusFilter(e.target.value)
+                                    }
+                                    className="rounded-lg border border-border bg-white py-1.5 px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                                >
+                                    {statusOptions.map((opt) => (
+                                        <option key={opt} value={opt}>
+                                            {opt}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         <div className="overflow-x-auto">
@@ -148,65 +236,76 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {rows.map((row) => (
-                                        <tr
-                                            key={row.id}
-                                            className="border-t border-border hover:bg-secondary/50"
-                                        >
-                                            <td className="px-4 py-3 font-bold font-mono text-primary">
-                                                {row.id}
-                                            </td>
-                                            <td className="px-4 py-3 text-xs">
-                                                {row.zona}
-                                            </td>
-                                            <td className="px-4 py-3 text-xs">
-                                                {row.tukang}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-1.5 w-20 rounded-full bg-secondary">
-                                                        <div
-                                                            className={`h-1.5 rounded-full ${
-                                                                row.statusMaterial ===
-                                                                "Selesai"
-                                                                    ? "bg-sky-500"
-                                                                    : row.statusMaterial ===
-                                                                        "Boros"
-                                                                      ? "bg-red-500"
-                                                                      : "bg-emerald-500"
-                                                            } ${widthClass(row.progress)}`}
-                                                        />
+                                    {filteredRows.map((row) => {
+                                        const progress = clampProgress(
+                                            row.progress
+                                        );
+                                        return (
+                                            <tr
+                                                key={row.id}
+                                                className="border-t border-border hover:bg-secondary/50"
+                                            >
+                                                <td className="px-4 py-3 font-bold font-mono text-primary">
+                                                    {row.id}
+                                                </td>
+                                                <td className="px-4 py-3 text-xs">
+                                                    {row.zona}
+                                                </td>
+                                                <td className="px-4 py-3 text-xs">
+                                                    {row.tukang}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-1.5 w-20 rounded-full bg-secondary overflow-hidden">
+                                                            {progress > 0 && (
+                                                                <div
+                                                                    className={`h-1.5 rounded-full ${progressBarColor(
+                                                                        row.statusMaterial
+                                                                    )}`}
+                                                                    style={{
+                                                                        width: `${progress}%`,
+                                                                    }}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        <span className="font-mono text-xs">
+                                                            {progress}%
+                                                        </span>
                                                     </div>
-                                                    <span className="font-mono text-xs">
-                                                        {row.progress}%
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span
+                                                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
+                                                            row.status ===
+                                                            "Aktif"
+                                                                ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                                : "bg-slate-100 text-slate-500 ring-slate-200"
+                                                        }`}
+                                                    >
+                                                        {row.status}
                                                     </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span
-                                                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
-                                                        row.status === "Aktif"
-                                                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                                                            : "bg-slate-100 text-slate-500 ring-slate-200"
-                                                    }`}
-                                                >
-                                                    {row.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <StatusBadge
-                                                    value={row.statusMaterial}
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {rows.length === 0 && (
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <StatusBadge
+                                                        value={
+                                                            row.statusMaterial
+                                                        }
+                                                    />
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {filteredRows.length === 0 && (
                                         <tr>
                                             <td
                                                 colSpan={6}
                                                 className="px-4 py-8 text-center text-sm text-muted-foreground"
                                             >
-                                                Belum ada data unit.
+                                                {unitQuery ||
+                                                statusFilter !==
+                                                    "Semua Status"
+                                                    ? "Tidak ada unit yang cocok dengan filter."
+                                                    : "Belum ada data unit."}
                                             </td>
                                         </tr>
                                     )}
@@ -216,7 +315,6 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                     </div>
 
                     <div className="space-y-2.5">
-                        {/* Header: judul + search */}
                         <div className="flex items-center justify-between gap-2">
                             <p className="font-bold">Stok Gudang</p>
 
@@ -238,7 +336,6 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                             </div>
                         </div>
 
-                        {/* List item */}
                         {visibleStok.map((s) => (
                             <div
                                 key={s.nama}
@@ -252,22 +349,23 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                                         {s.sisaStok.toLocaleString("id-ID")}
                                     </span>
                                 </div>
-                                <div className="mt-2 h-1.5 rounded-full bg-secondary">
-                                    <div
-                                        className={`h-1.5 rounded-full ${
-                                            s.persen > 50
-                                                ? "bg-emerald-500"
-                                                : s.persen > 25
-                                                  ? "bg-amber-400"
-                                                  : "bg-red-500"
-                                        }`}
-                                        style={{ width: `${s.persen}%` }}
-                                    />
+                                <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
+                                    {s.persen > 0 && (
+                                        <div
+                                            className={`h-1.5 rounded-full ${
+                                                s.persen > 50
+                                                    ? "bg-emerald-500"
+                                                    : s.persen > 25
+                                                      ? "bg-amber-400"
+                                                      : "bg-red-500"
+                                            }`}
+                                            style={{ width: `${s.persen}%` }}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ))}
 
-                        {/* Tampilkan lainnya / Sembunyikan */}
                         <div className="flex gap-2">
                             {hasMore && (
                                 <button
@@ -292,7 +390,6 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                             )}
                         </div>
 
-                        {/* Kosong */}
                         {filteredStok.length === 0 && (
                             <p className="text-xs text-muted-foreground">
                                 {stokQuery

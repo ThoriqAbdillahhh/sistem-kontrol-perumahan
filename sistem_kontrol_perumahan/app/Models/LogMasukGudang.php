@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\LogGudangHistory;
 
 class LogMasukGudang extends Model
 {
@@ -18,6 +19,40 @@ class LogMasukGudang extends Model
     'total_harga', 
     'keterangan',
     'created_by'];
+
+    protected static function booted()
+    {
+        static::created(function ($model) {
+            LogGudangHistory::create([
+                'user_id' => \Illuminate\Support\Facades\Auth::id(),
+                'tipe_log' => 'masuk',
+                'log_id' => $model->id,
+                'action' => 'create',
+                'data_baru' => $model->toArray(),
+            ]);
+        });
+
+        static::updating(function ($model) {
+            LogGudangHistory::create([
+                'user_id' => \Illuminate\Support\Facades\Auth::id(),
+                'tipe_log' => 'masuk',
+                'log_id' => $model->id,
+                'action' => 'update',
+                'data_lama' => $model->getOriginal(),
+                'data_baru' => $model->getAttributes(),
+            ]);
+        });
+
+        static::deleted(function ($model) {
+            LogGudangHistory::create([
+                'user_id' => \Illuminate\Support\Facades\Auth::id(),
+                'tipe_log' => 'masuk',
+                'log_id' => $model->id,
+                'action' => 'delete',
+                'data_lama' => $model->toArray(),
+            ]);
+        });
+    }
 
     protected function casts(): array
     {

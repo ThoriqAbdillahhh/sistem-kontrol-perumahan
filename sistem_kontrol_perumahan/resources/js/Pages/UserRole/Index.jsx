@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, usePage } from "@inertiajs/react";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 import {
     UserPlus,
     Pencil,
@@ -75,12 +76,12 @@ function StatusToggle({ user }) {
         <button
             type="button"
             onClick={handleToggle}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+            className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition ${
                 enabled ? "bg-emerald-500" : "bg-slate-300"
             }`}
         >
             <span
-                className={`inline-block h-5.5 w-5.5 transform rounded-full bg-white transition ${
+                className={`cursor-pointer inline-block h-5.5 w-5.5 transform rounded-full bg-white transition ${
                     enabled ? "translate-x-5" : "translate-x-0.5"
                 }`}
             />
@@ -94,6 +95,8 @@ export default function Index({ users, roles }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState("create");
     const [selectedUser, setSelectedUser] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     const openCreate = () => {
         setModalMode("create");
@@ -108,11 +111,19 @@ export default function Index({ users, roles }) {
     };
 
     const handleDelete = (user) => {
-        if (confirm(`Hapus pengguna "${user.nama}"?`)) {
-            router.delete(route("users.destroy", user.id), {
-                preserveScroll: true,
-            });
-        }
+        setDeleteTarget(user);
+    };
+
+    const confirmDelete = () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        router.delete(route("users.destroy", deleteTarget.id), {
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleting(false);
+                setDeleteTarget(null);
+            },
+        });
     };
 
     return (
@@ -134,7 +145,7 @@ export default function Index({ users, roles }) {
                     <button
                         type="button"
                         onClick={openCreate}
-                        className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+                        className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
                     >
                         <UserPlus size={16} />
                         Tambah User
@@ -209,7 +220,7 @@ export default function Index({ users, roles }) {
                                                         onClick={() =>
                                                             openEdit(u)
                                                         }
-                                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-secondary"
+                                                        className="cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-secondary"
                                                     >
                                                         <Pencil size={14} />
                                                     </button>
@@ -226,7 +237,7 @@ export default function Index({ users, roles }) {
                                                     onClick={() =>
                                                         handleDelete(u)
                                                     }
-                                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-red-500 hover:bg-red-50"
+                                                    className="cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg border border-border text-red-500 hover:bg-red-50"
                                                 >
                                                     <Trash2 size={14} />
                                                 </button>
@@ -256,6 +267,22 @@ export default function Index({ users, roles }) {
                 user={selectedUser}
                 roles={roles}
                 onClose={() => setModalOpen(false)}
+            />
+
+            <ConfirmDialog
+                open={!!deleteTarget}
+                title="Hapus Pengguna Ini?"
+                message={
+                    deleteTarget
+                        ? `Akun "${deleteTarget.nama}" (${deleteTarget.email}) akan dihapus permanen dan tidak bisa dikembalikan.`
+                        : ""
+                }
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                danger
+                processing={deleting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
             />
         </AuthenticatedLayout>
     );
