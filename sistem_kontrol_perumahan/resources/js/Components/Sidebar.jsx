@@ -121,7 +121,6 @@ export default function Sidebar() {
                             <p className="text-xs font-semibold leading-tight text-white">
                                 {auth.user.name}
                             </p>
-                            <RoleBadge role={role} />
                         </div>
                     </div>
 
