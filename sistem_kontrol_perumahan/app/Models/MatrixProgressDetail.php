@@ -2,14 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MatrixProgressDetail extends Model
 {
+    use HasFactory;
+
     protected $table = 'matrix_progress_detail';
 
     protected $fillable = [
-        'matrix_id', 'material_id', 'qty_standar', 'batas_warning', 'batas_boros',
+        'matrix_id',
+        'material_id',
+        'qty_standar',
+    ];
+
+    protected $casts = [
+        'qty_standar' => 'decimal:2',
     ];
 
     public function matrix()
@@ -19,6 +28,6 @@ class MatrixProgressDetail extends Model
 
     public function material()
     {
-        return $this->belongsTo(Material::class);
+        return $this->belongsTo(Material::class, 'material_id');
     }
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 
@@ -6,6 +7,7 @@ import {
     Check,
     AlertTriangle,
     TrendingUp,
+    Search,
 } from "lucide-react";
     
 function widthClass(v) {
@@ -35,7 +37,18 @@ function formatRupiahJt(value) {
     return `Rp ${jt.toLocaleString("id-ID", { maximumFractionDigits: 0 })} Jt`;
 }
 
+const STOK_LIMIT = 5;
+
 export default function Dashboard({ kpi, rows, stokGudang }) {
+    const [stokQuery, setStokQuery] = useState("");
+    const [stokVisible, setStokVisible] = useState(STOK_LIMIT);
+
+    const filteredStok = stokGudang.filter((s) =>
+        s.nama.toLowerCase().includes(stokQuery.toLowerCase())
+    );
+    const visibleStok = filteredStok.slice(0, stokVisible);
+    const hasMore = filteredStok.length > stokVisible;
+
     const cards = [
         {
             title: "Total Unit Aktif",
@@ -203,8 +216,30 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                     </div>
 
                     <div className="space-y-2.5">
-                        <p className="font-bold">Stok Gudang</p>
-                        {stokGudang.map((s) => (
+                        {/* Header: judul + search */}
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="font-bold">Stok Gudang</p>
+
+                            <div className="relative">
+                                <Search
+                                    size={13}
+                                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Cari material…"
+                                    value={stokQuery}
+                                    onChange={(e) => {
+                                        setStokQuery(e.target.value);
+                                        setStokVisible(STOK_LIMIT);
+                                    }}
+                                    className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                            </div>
+                        </div>
+
+                        {/* List item */}
+                        {visibleStok.map((s) => (
                             <div
                                 key={s.nama}
                                 className="rounded-xl border border-border bg-white p-3"
@@ -231,9 +266,38 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                                 </div>
                             </div>
                         ))}
-                        {stokGudang.length === 0 && (
+
+                        {/* Tampilkan lainnya / Sembunyikan */}
+                        <div className="flex gap-2">
+                            {hasMore && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setStokVisible((v) => v + STOK_LIMIT)
+                                    }
+                                    className="flex-1 rounded-xl border border-border py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+                                >
+                                    Tampilkan lainnya ({filteredStok.length - stokVisible} item)
+                                </button>
+                            )}
+
+                            {stokVisible > STOK_LIMIT && (
+                                <button
+                                    type="button"
+                                    onClick={() => setStokVisible(STOK_LIMIT)}
+                                    className="flex-1 rounded-xl border border-border py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+                                >
+                                    Sembunyikan
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Kosong */}
+                        {filteredStok.length === 0 && (
                             <p className="text-xs text-muted-foreground">
-                                Belum ada data stok gudang.
+                                {stokQuery
+                                    ? `Tidak ada hasil untuk "${stokQuery}".`
+                                    : "Belum ada data stok gudang."}
                             </p>
                         )}
                     </div>
