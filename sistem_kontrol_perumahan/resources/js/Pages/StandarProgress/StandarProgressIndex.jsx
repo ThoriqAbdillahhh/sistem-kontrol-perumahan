@@ -29,6 +29,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
   const [detailPanelTahapId, setDetailPanelTahapId] = useState(null);
   const [deletingDetail, setDeletingDetail] = useState(null);
   const [materialQuery, setMaterialQuery] = useState("");
+  const [materialDropdownOpen, setMaterialDropdownOpen] = useState(false);
   const [editingDetailId, setEditingDetailId] = useState(null);
   const [editingQty, setEditingQty] = useState(0);
 
@@ -101,6 +102,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
     setEditTahap(null);
     setDetailPanelTahapId(row.id);
     setMaterialQuery("");
+    setMaterialDropdownOpen(false);
     setEditingDetailId(null);
     detailForm.reset();
     detailForm.clearErrors();
@@ -127,6 +129,12 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
     });
   }, [detailPanelTahap, materials, materialQuery]);
 
+  function selectMaterial(m) {
+    detailForm.setData("material_id", m.id);
+    setMaterialQuery(`${m.kode_material} · ${m.nama_material}`);
+    setMaterialDropdownOpen(false);
+  }
+
   function handleAddDetail(e) {
     e.preventDefault();
     if (!detailPanelTahap || !detailForm.data.material_id) return;
@@ -135,6 +143,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
       onSuccess: () => {
         detailForm.reset();
         setMaterialQuery("");
+        setMaterialDropdownOpen(false);
       },
     });
   }
@@ -440,27 +449,48 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
                 <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tambah Material
                 </span>
-                <div className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 text-xs focus-within:border-primary">
-                  <Search size={14} className="shrink-0 text-muted-foreground" />
-                  <input
-                    value={materialQuery}
-                    onChange={(e) => setMaterialQuery(e.target.value)}
-                    placeholder="Cari material..."
-                    className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
-                  />
+
+            <div>
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 text-xs focus-within:border-primary">
+                <Search size={14} className="shrink-0 text-muted-foreground" />
+                <input
+                value={materialQuery}
+                onChange={(e) => {
+                    setMaterialQuery(e.target.value);
+                    detailForm.setData("material_id", "");
+                    setMaterialDropdownOpen(true);
+                }}
+                onFocus={() => setMaterialDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setMaterialDropdownOpen(false), 150)}
+                placeholder="Cari & pilih material..."
+                className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+                autoComplete="off"
+                />
+            </div>
+
+            {materialDropdownOpen && (
+                <div className="mt-1 max-h-40 w-full overflow-y-auto rounded-xl border border-border bg-white shadow-sm">
+                {availableMaterials.length === 0 && (
+                    <p className="px-3 py-3 text-center text-xs text-muted-foreground">
+                    Material tidak ditemukan.
+                    </p>
+                )}
+                {availableMaterials.map((m) => (
+                    <button
+                    type="button"
+                    key={m.id}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectMaterial(m)}
+                    className="block w-full px-3 py-2 text-left text-xs hover:bg-secondary"
+                    >
+                    <span className="font-mono font-semibold text-primary">{m.kode_material}</span>{" "}
+                    · {m.nama_material}
+                    </button>
+                ))}
                 </div>
-                <select
-                  value={detailForm.data.material_id}
-                  onChange={(e) => detailForm.setData("material_id", e.target.value)}
-                  className="w-full rounded-xl border border-border bg-input-background px-3 py-2.5 text-sm outline-none focus:border-primary"
-                >
-                  <option value="">— Pilih material —</option>
-                  {availableMaterials.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.kode_material} · {m.nama_material}
-                    </option>
-                  ))}
-                </select>
+            )}
+            </div>
+
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -524,7 +554,7 @@ export default function StandarProgressIndex({ matrixRows, materials, canEdit, t
       {/* ── Modal konfirmasi hapus standar material ─────────────────── */}
       {deletingDetail && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={() => setDeletingDetail(null)}
         >
           <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
