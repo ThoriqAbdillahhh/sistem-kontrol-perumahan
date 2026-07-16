@@ -10,6 +10,7 @@ use App\Models\LogMasukGudang;
 use App\Models\Material;
 use App\Models\Unit;
 use App\Services\StokGudangService;
+use App\Services\MaterialConsumptionService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -232,12 +233,15 @@ class LogGudangController extends Controller
             ->first();
 
         if ($progressTerakhir) {
-            $hasil = $this->consumptionService->evaluasiUnit(
+            $hasil = (new MaterialConsumptionService())->evaluasiUnit(
                 $unit,
                 $progressTerakhir->progress_percent
             );
 
-            $progressTerakhir->update(['status' => $hasil['status']]);
+            $progressTerakhir->update([
+    'status_material' => $hasil['status'],
+    'detail_material' => $hasil['detail'],
+]);
         }
     }
 }
