@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/unit', [UnitController::class, 'index'])->name('unit.index');
     Route::post('/unit', [UnitController::class, 'store'])->name('unit.store');
     Route::put('/unit/{unit}', [UnitController::class, 'update'])->name('unit.update');
+    Route::delete('/unit/bulk-destroy', [UnitController::class, 'destroyBulk'])->name('unit.destroyBulk');
     Route::delete('/unit/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
 });
 

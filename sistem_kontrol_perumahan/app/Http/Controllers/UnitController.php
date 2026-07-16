@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUnitRequest;
 use App\Models\Unit;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class UnitController extends Controller
@@ -34,5 +35,17 @@ class UnitController extends Controller
         $unit->delete();
 
         return redirect()->back()->with('success', 'Unit berhasil dihapus.');
+    }
+
+    public function destroyBulk(Request $request)
+    {
+        $ids = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:units,id',
+        ])['ids'];
+
+        $count = Unit::whereIn('id', $ids)->delete();
+
+        return redirect()->back()->with('success', "{$count} unit berhasil dihapus.");
     }
 }

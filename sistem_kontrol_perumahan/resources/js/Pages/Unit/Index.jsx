@@ -49,6 +49,12 @@ export default function UnitIndex({ units }) {
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
+    // ── Select massal ──────────────────────────────────────────
+    const [selectMode, setSelectMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+
     function toggleSort(column) {
         if (sortBy === column) {
             setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
@@ -91,6 +97,55 @@ export default function UnitIndex({ units }) {
     useEffect(() => {
         setCurrentPage(1);
     }, [search, filterStatus, pageSize]);
+
+    // Kalau data berubah (misal habis delete), buang id yang sudah tidak ada dari seleksi
+    useEffect(() => {
+        setSelectedIds((prev) => prev.filter((id) => units.some((u) => u.id === id)));
+    }, [units]);
+
+    const pageIds = paginatedUnits.map((u) => u.id);
+    const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+    const someOnPageSelected = pageIds.some((id) => selectedIds.includes(id));
+
+    function toggleSelectMode() {
+        if (selectMode) {
+            setSelectedIds([]);
+        }
+        setSelectMode((prev) => !prev);
+    }
+
+    function toggleSelectOne(id) {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    }
+
+    function toggleSelectAllOnPage() {
+        if (allOnPageSelected) {
+            setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+        } else {
+            setSelectedIds((prev) => [...new Set([...prev, ...pageIds])]);
+        }
+    }
+
+    function clearSelection() {
+        setSelectedIds([]);
+        setSelectMode(false);
+    }
+
+    function confirmBulkDelete() {
+        setBulkDeleting(true);
+        router.delete(route('unit.destroyBulk'), {
+            data: { ids: selectedIds },
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedIds([]);
+                setBulkDeleteOpen(false);
+                setSelectMode(false);
+            },
+            onFinish: () => setBulkDeleting(false),
+        });
+    }
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         nama_unit: '',
@@ -194,6 +249,17 @@ export default function UnitIndex({ units }) {
                                 </select>
 
                                 <button
+                                    onClick={toggleSelectMode}
+                                    className={`whitespace-nowrap rounded-xl border px-4 py-2 text-xs font-bold transition-colors ${
+                                        selectMode
+                                            ? 'border-sky-600 bg-sky-50 text-sky-700'
+                                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'
+                                    }`}
+                                >
+                                    {selectMode ? 'Batal Pilih' : 'Pilih'}
+                                </button>
+
+                                <button
                                     onClick={openAdd}
                                     className="whitespace-nowrap rounded-xl bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-600/90"
                                 >
@@ -202,10 +268,47 @@ export default function UnitIndex({ units }) {
                             </div>
                         </div>
 
+                        {/* Toolbar aksi massal - hanya tampil kalau ada yang diseleksi */}
+                        {selectMode && selectedIds.length > 0 && (
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sky-100 bg-sky-50 px-4 py-2.5">
+                                <span className="text-sm font-semibold text-sky-700">
+                                    {selectedIds.length} unit dipilih
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={clearSelection}
+                                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
+                                    >
+                                        Batal Pilih
+                                    </button>
+                                    <button
+                                        onClick={() => setBulkDeleteOpen(true)}
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600/90"
+                                    >
+                                        <Trash2 size={13} />
+                                        Hapus Terpilih
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[720px] text-sm">
+                            <table className="w-full min-w-[760px] text-sm">
                                 <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-500">
                                     <tr>
+                                        {selectMode && (
+                                            <th className="w-10 px-4 py-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={allOnPageSelected}
+                                                    ref={(el) => {
+                                                        if (el) el.indeterminate = !allOnPageSelected && someOnPageSelected;
+                                                    }}
+                                                    onChange={toggleSelectAllOnPage}
+                                                    className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                                                />
+                                            </th>
+                                        )}
                                         <SortableHeader label="Unit" column="nama_unit" sortBy={sortBy} sortDir={sortDir} onSort={toggleSort} />
                                         <SortableHeader label="Zona" column="zona" sortBy={sortBy} sortDir={sortDir} onSort={toggleSort} />
                                         <SortableHeader label="Kepala Tukang" column="tukang" sortBy={sortBy} sortDir={sortDir} onSort={toggleSort} />
@@ -217,7 +320,22 @@ export default function UnitIndex({ units }) {
                                 </thead>
                                 <tbody>
                                     {paginatedUnits.map((unit) => (
-                                        <tr key={unit.id} className="border-t border-slate-200 hover:bg-slate-50 transition-colors">
+                                        <tr
+                                            key={unit.id}
+                                            className={`border-t border-slate-200 transition-colors hover:bg-slate-50 ${
+                                                selectedIds.includes(unit.id) ? 'bg-sky-50/60' : ''
+                                            }`}
+                                        >
+                                            {selectMode && (
+                                                <td className="px-4 py-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.includes(unit.id)}
+                                                        onChange={() => toggleSelectOne(unit.id)}
+                                                        className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="px-4 py-3 font-mono font-bold text-sky-600">
                                                 {highlightText(unit.nama_unit, search)}
                                             </td>
@@ -267,7 +385,7 @@ export default function UnitIndex({ units }) {
                                     ))}
                                     {paginatedUnits.length === 0 && (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                                            <td colSpan={selectMode ? 8 : 7} className="px-4 py-6 text-center text-slate-400">
                                                 Belum ada data unit.
                                             </td>
                                         </tr>
@@ -309,7 +427,7 @@ export default function UnitIndex({ units }) {
                     {/* Modal: Tambah/Edit Unit */}
                     {drawerOpen && (
                         <div
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
                             onClick={() => setDrawerOpen(false)}
                         >
                             <div
@@ -424,10 +542,10 @@ export default function UnitIndex({ units }) {
                         </div>
                     )}
 
-                    {/* Modal konfirmasi hapus */}
+                    {/* Modal konfirmasi hapus satuan */}
                     {deletingUnit && (
                         <div
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
                             onClick={() => setDeletingUnit(null)}
                         >
                             <div
@@ -451,6 +569,43 @@ export default function UnitIndex({ units }) {
                                         className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-600/90"
                                     >
                                         Ya, Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal konfirmasi hapus massal */}
+                    {bulkDeleteOpen && (
+                        <div
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+                            onClick={() => !bulkDeleting && setBulkDeleteOpen(false)}
+                        >
+                            <div
+                                className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <h2 className="mb-2 text-lg font-semibold text-slate-900">
+                                    Hapus {selectedIds.length} Unit?
+                                </h2>
+                                <p className="mb-6 text-sm text-slate-500">
+                                    Semua unit yang dipilih akan dihapus permanen. Tindakan ini tidak bisa
+                                    dibatalkan.
+                                </p>
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setBulkDeleteOpen(false)}
+                                        disabled={bulkDeleting}
+                                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm disabled:opacity-50"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={confirmBulkDelete}
+                                        disabled={bulkDeleting}
+                                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-600/90 disabled:opacity-50"
+                                    >
+                                        {bulkDeleting ? 'Menghapus...' : `Ya, Hapus ${selectedIds.length} Unit`}
                                     </button>
                                 </div>
                             </div>

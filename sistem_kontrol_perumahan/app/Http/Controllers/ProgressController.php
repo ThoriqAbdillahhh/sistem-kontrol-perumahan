@@ -15,7 +15,8 @@ class ProgressController extends Controller
     public function __construct(protected MaterialConsumptionService $consumptionService)
     {
     }
-   public function index()
+
+    public function index()
     {
         $units = Unit::with([
             'latestProgress',
@@ -46,12 +47,21 @@ class ProgressController extends Controller
         $unit = Unit::findOrFail($request->validated('unit_id'));
         $hasil = $this->consumptionService->evaluasiUnit($unit, (float) $request->validated('progress_percent'));
 
-        ProgressUnit::create([
-            ...$request->validated(),
-            'updated_by'       => Auth::id(),
-            'status_material'  => strtoupper($hasil['status']),
-            'detail_material'  => $hasil['detail'],
-        ]);
+        DB::transaction(function () use ($request, $unit, $hasil) {
+            ProgressUnit::create([
+                ...$request->validated(),
+                'updated_by'       => Auth::id(),
+                'status_material'  => strtoupper($hasil['status']),
+                'detail_material'  => $hasil['detail'],
+            ]);
+
+            // Begitu ada input progress, unit otomatis dianggap Aktif —
+            // hanya diubah kalau statusnya sekarang bukan sudah Aktif,
+            // supaya tidak menimpa status lain (misal Selesai) tanpa alasan.
+            if ($unit->status !== 'Aktif') {
+                $unit->update(['status' => 'Aktif']);
+            }
+        });
 
         return back()->with('success', 'Progress unit berhasil diperbarui.');
     }

@@ -18,6 +18,21 @@ function StatusBadge({ status }) {
     );
 }
 
+function UnitStatusBadge({ status }) {
+    const isAktif = status === 'Aktif';
+    return (
+        <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
+                isAktif
+                    ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                    : 'bg-slate-100 text-slate-500 ring-slate-200'
+            }`}
+        >
+            {status ?? 'Non-Aktif'}
+        </span>
+    );
+}
+
 const STATUS_PRIORITY = { BOROS: 3, WARNING: 2, AMAN: 1 };
 
 function getOverallStatus(unitId, monitoring) {
@@ -79,7 +94,8 @@ export default function ProgressIndex({ units, monitoring }) {
                                     <th className="px-4 py-3 text-left font-semibold">Unit</th>
                                     <th className="px-4 py-3 text-left font-semibold">Progress Terakhir</th>
                                     <th className="px-4 py-3 text-left font-semibold">Tanggal Update</th>
-                                    <th className="px-4 py-3 text-left font-semibold">Status</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Status Unit</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Status Material</th>
                                     <th className="px-4 py-3 text-left font-semibold">Aksi</th>
                                 </tr>
                             </thead>
@@ -93,6 +109,9 @@ export default function ProgressIndex({ units, monitoring }) {
                                             </td>
                                             <td className="px-4 py-3 text-slate-500">
                                                 {unit.latest_progress?.tanggal_update ?? '-'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <UnitStatusBadge status={unit.status} />
                                             </td>
                                             <td className="px-4 py-3">
                                                 <StatusBadge status={getOverallStatus(unit.id, monitoring)} />
@@ -124,7 +143,7 @@ export default function ProgressIndex({ units, monitoring }) {
                                         </tr>
                                         {expandedUnitId === unit.id && (
                                             <tr>
-                                                <td colSpan={5} className="bg-slate-50 px-4 py-4">
+                                                <td colSpan={6} className="bg-slate-50 px-4 py-4">
                                                     <table className="w-full text-xs">
                                                         <thead className="text-slate-400">
                                                             <tr>
@@ -160,7 +179,7 @@ export default function ProgressIndex({ units, monitoring }) {
 
                     {selectedUnit && (
                         <div
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
                             onClick={() => setSelectedUnit(null)}
                         >
                             <div
@@ -246,7 +265,7 @@ export default function ProgressIndex({ units, monitoring }) {
 
                     {historyUnit && (
                         <div
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
                             onClick={() => setHistoryUnit(null)}
                         >
                             <div
