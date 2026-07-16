@@ -5,7 +5,9 @@ export default function TableCard({ title, action, children }) {
                 <h2 className="font-bold">{title}</h2>
                 {action}
             </div>
-            {children}
+            <div className="px-5 pb-5 pt-4">
+                {children}
+            </div>
         </div>
     );
 }

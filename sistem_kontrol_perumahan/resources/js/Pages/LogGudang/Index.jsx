@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect  } from "react";
 import { Head, useForm, router, usePage } from "@inertiajs/react";
-import { Plus, Edit3, Trash2, X, History } from "lucide-react";
+import { Plus, Edit3, Trash2, X, History, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import SectionHeader from "@/Components/SectionHeader";
 import TableCard from "@/Components/TableCard";
@@ -32,6 +32,14 @@ export default function LogGudangIndex({
     const [qtyMode, setQtyMode] = useState("total"); // "total" | "per_unit"
     const [qtyInputRaw, setQtyInputRaw] = useState("");
     const [unitRows, setUnitRows] = useState([""]); // array of unit_id string, default 1 slot kosong
+
+    const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+    const [pageSizeMasuk, setPageSizeMasuk] = useState(10);
+    const [pageMasuk, setPageMasuk] = useState(1);
+    const [pageSizeKeluar, setPageSizeKeluar] = useState(10);
+    const [pageKeluar, setPageKeluar] = useState(1);
+    const [stokQuery, setStokQuery] = useState("");
+    const [stokVisible, setStokVisible] = useState(5);
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyData, setHistoryData] = useState([]);
@@ -132,6 +140,14 @@ export default function LogGudangIndex({
         [logMasuk, search],
     );
 
+    const totalPagesMasuk = Math.max(1, Math.ceil(filteredMasuk.length / pageSizeMasuk));
+    const paginatedMasuk = useMemo(() => {
+        const start = (pageMasuk - 1) * pageSizeMasuk;
+        return filteredMasuk.slice(start, start + pageSizeMasuk);
+    }, [filteredMasuk, pageMasuk, pageSizeMasuk]);
+    const rangeStartMasuk = filteredMasuk.length === 0 ? 0 : (pageMasuk - 1) * pageSizeMasuk + 1;
+    const rangeEndMasuk = Math.min(pageMasuk * pageSizeMasuk, filteredMasuk.length);
+
     const materialsTersedia = useMemo(() => {
         if (tab !== "keluar") return materials;
         const stokMap = new Map(stok.map((s) => [s.material_id, s.sisa_stok]));
@@ -148,6 +164,14 @@ export default function LogGudangIndex({
         [logKeluar, search],
     );
 
+    const totalPagesKeluar = Math.max(1, Math.ceil(filteredKeluar.length / pageSizeKeluar));
+    const paginatedKeluar = useMemo(() => {
+        const start = (pageKeluar - 1) * pageSizeKeluar;
+        return filteredKeluar.slice(start, start + pageSizeKeluar);
+    }, [filteredKeluar, pageKeluar, pageSizeKeluar]);
+    const rangeStartKeluar = filteredKeluar.length === 0 ? 0 : (pageKeluar - 1) * pageSizeKeluar + 1;
+    const rangeEndKeluar = Math.min(pageKeluar * pageSizeKeluar, filteredKeluar.length);
+
     function openAdd() {
         setEditTarget(null);
         form.reset();
@@ -156,6 +180,22 @@ export default function LogGudangIndex({
         setUnitRows([""]);
         setModalOpen(true);
     }
+
+    useEffect(() => {
+        setPageMasuk(1);
+    }, [filteredMasuk.length, pageSizeMasuk]);
+
+    useEffect(() => {
+        setPageKeluar(1);
+    }, [filteredKeluar.length, pageSizeKeluar]);
+
+    useEffect(() => {
+        setPageMasuk((p) => Math.min(p, totalPagesMasuk));
+    }, [totalPagesMasuk]);
+
+    useEffect(() => {
+        setPageKeluar((p) => Math.min(p, totalPagesKeluar));
+    }, [totalPagesKeluar]);
 
     function openEdit(row) {
         setEditTarget(row);
@@ -321,7 +361,7 @@ export default function LogGudangIndex({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredMasuk.map((r) => (
+                                        {paginatedMasuk.map((r) => (
                                             <tr
                                                 key={r.id}
                                                 className="border-t border-border hover:bg-secondary/50"
@@ -387,6 +427,32 @@ export default function LogGudangIndex({
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+                                <span>
+                                    Menampilkan {rangeStartMasuk}–{rangeEndMasuk} dari {filteredMasuk.length} log
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageMasuk((p) => Math.max(1, p - 1))}
+                                        disabled={pageMasuk <= 1}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <span className="font-semibold text-foreground">
+                                        Halaman {pageMasuk} / {totalPagesMasuk}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageMasuk((p) => Math.min(totalPagesMasuk, p + 1))}
+                                        disabled={pageMasuk >= totalPagesMasuk}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
                         </TableCard>
                     ) : (
                         <TableCard
@@ -433,7 +499,7 @@ export default function LogGudangIndex({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredKeluar.map((r) => (
+                                        {paginatedKeluar.map((r) => (
                                             <tr
                                                 key={r.id}
                                                 className="border-t border-border hover:bg-secondary/50"
@@ -442,12 +508,14 @@ export default function LogGudangIndex({
                                                     {r.tanggal.slice(0, 10)}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="rounded-md bg-sky-50 px-2 py-0.5 font-mono text-xs font-bold text-sky-700">
-                                                        {r.unit?.nama_unit}
-                                                    </span>
-                                                    <span className="ml-1 text-[11px] text-muted-foreground">
-                                                        Zona {r.unit?.zona}
-                                                    </span>
+                                                    <div className="space-y-1">
+                                                        <span className="inline-flex rounded-md bg-sky-50 px-2 py-0.5 font-mono text-xs font-bold text-sky-700">
+                                                            {r.unit?.nama_unit}
+                                                        </span>
+                                                        <div className="text-[11px] text-muted-foreground">
+                                                            Zona {r.unit?.zona}
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-bold text-primary">
@@ -500,49 +568,139 @@ export default function LogGudangIndex({
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+                                <span>
+                                    Menampilkan {rangeStartKeluar}–{rangeEndKeluar} dari {filteredKeluar.length} log
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageKeluar((p) => Math.max(1, p - 1))}
+                                        disabled={pageKeluar <= 1}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <span className="font-semibold text-foreground">
+                                        Halaman {pageKeluar} / {totalPagesKeluar}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageKeluar((p) => Math.min(totalPagesKeluar, p + 1))}
+                                        disabled={pageKeluar >= totalPagesKeluar}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
                         </TableCard>
                     )}
 
                     <div className="space-y-2.5">
-                        <p className="font-bold">Stok Real-time</p>
-                        {stok.map((s) => {
-                            const pct =
-                                s.total_masuk > 0
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="font-bold">Stok Real-time</p>
+                            <div className="relative">
+                                <Search
+                                    size={13}
+                                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Cari material…"
+                                    value={stokQuery}
+                                    onChange={(e) => {
+                                        setStokQuery(e.target.value);
+                                        setStokVisible(5);
+                                    }}
+                                    className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                            </div>
+                        </div>
+
+                        {stok
+                            .filter((s) =>
+                                s.nama
+                                    .toLowerCase()
+                                    .includes(stokQuery.toLowerCase()),
+                            )
+                            .slice(0, stokVisible)
+                            .map((s) => {
+                                const pct = s.total_masuk > 0
                                     ? Math.min(
                                           100,
                                           (s.sisa_stok / s.total_masuk) * 100,
                                       )
                                     : 0;
-                            const barColor = s.is_warning
-                                ? "bg-red-500"
-                                : pct > 50
-                                  ? "bg-emerald-500"
-                                  : "bg-amber-400";
-                            return (
-                                <div
-                                    key={s.material_id}
-                                    className="rounded-xl border border-border bg-white p-3"
+                                const barColor = s.is_warning
+                                    ? "bg-red-500"
+                                    : pct > 50
+                                      ? "bg-emerald-500"
+                                      : "bg-amber-400";
+                                return (
+                                    <div
+                                        key={s.material_id}
+                                        className="rounded-xl border border-border bg-white p-3"
+                                    >
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-semibold">
+                                                {s.nama}
+                                            </span>
+                                            <span className="font-mono text-xs font-bold">
+                                                {s.sisa_stok.toLocaleString("id-ID")} {s.satuan}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
+                                            {pct > 0 && (
+                                                <div
+                                                    className={`h-1.5 rounded-full ${barColor}`}
+                                                    style={{ width: `${pct}%` }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="mt-1 text-[11px] text-muted-foreground">
+                                            {formatRupiah(s.nilai_rupiah)}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            {stok.filter((s) =>
+                                s.nama
+                                    .toLowerCase()
+                                    .includes(stokQuery.toLowerCase()),
+                            ).length > stokVisible && (
+                                <button
+                                    type="button"
+                                    onClick={() => setStokVisible((v) => v + 5)}
+                                    className="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
                                 >
-                                    <div className="flex justify-between text-sm">
-                                        <span className="font-semibold">
-                                            {s.nama}
-                                        </span>
-                                        <span className="font-mono text-xs font-bold">
-                                            {s.sisa_stok} {s.satuan}
-                                        </span>
-                                    </div>
-                                    <div className="mt-2 h-1.5 rounded-full bg-secondary">
-                                        <div
-                                            className={`h-1.5 rounded-full ${barColor}`}
-                                            style={{ width: `${pct}%` }}
-                                        />
-                                    </div>
-                                    <div className="mt-1 text-[11px] text-muted-foreground">
-                                        {formatRupiah(s.nilai_rupiah)}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                    Tampilkan lainnya
+                                </button>
+                            )}
+                            {stokVisible > 5 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setStokVisible(5)}
+                                    className="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+                                >
+                                    Sembunyikan
+                                </button>
+                            )}
+                        </div>
+
+                        {stok.filter((s) =>
+                            s.nama
+                                .toLowerCase()
+                                .includes(stokQuery.toLowerCase()),
+                        ).length === 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                {stokQuery
+                                    ? `Tidak ada hasil untuk "${stokQuery}".`
+                                    : "Belum ada data stok gudang."}
+                            </p>
+                        )}
                     </div>
                 </div>
 
