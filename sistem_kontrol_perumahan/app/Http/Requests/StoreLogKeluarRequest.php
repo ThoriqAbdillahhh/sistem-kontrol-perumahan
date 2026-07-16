@@ -16,13 +16,13 @@ class StoreLogKeluarRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tanggal'     => ['required', 'date'],
-            'unit_id'     => ['required', 'exists:units,id'],
-            'material_id' => ['required', 'exists:materials,id'],
-            'qty'         => ['required', 'numeric', 'min:0'],
-            'harga'       => ['required', 'numeric', 'min:0'],
-            'total'       => ['required', 'numeric', 'min:0'],
-            'keterangan'  => ['nullable', 'string'],
+            'tanggal'      => ['required', 'date'],
+            'unit_ids'     => ['required', 'array', 'min:1'],
+            'unit_ids.*'   => ['required', 'exists:units,id', 'distinct'],
+            'material_id'  => ['required', 'exists:materials,id'],
+            'qty'          => ['required', 'numeric', 'min:0.01'], // total barang (semua unit)
+            'harga'        => ['required', 'numeric', 'min:0'],
+            'keterangan'   => ['nullable', 'string'],
         ];
     }
 
@@ -30,23 +30,29 @@ class StoreLogKeluarRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $materialId = $this->input('material_id');
-            $qtyDiminta = (float) $this->input('qty');
+            $qtyTotal   = (float) $this->input('qty');
+            $unitIds    = (array) $this->input('unit_ids', []);
+            $jumlahUnit = count($unitIds);
 
-            if (! $materialId || $qtyDiminta <= 0) {
+            if (! $materialId || $qtyTotal <= 0 || $jumlahUnit === 0) {
                 return;
             }
 
-            $stokService = app(StokGudangService::class);
-            $stokTersedia = $stokService->stokMaterial((int) $materialId);
-
-            // Kalau ini update, qty lama record ini dikembalikan dulu ke stok
-            // sebelum dicek, karena qty lama bakal digantikan qty baru.
-            $logKeluar = $this->route('logKeluar');
-            if ($logKeluar && (int) $logKeluar->material_id === (int) $materialId) {
-                $stokTersedia += (float) $logKeluar->qty;
+            // Wajib habis dibagi rata ke semua unit yang dipilih.
+            $sisaBagi = fmod($qtyTotal, $jumlahUnit);
+            if (abs($sisaBagi) > 0.0001 && abs($sisaBagi - $jumlahUnit) > 0.0001) {
+                $qtyPerUnit = $qtyTotal / $jumlahUnit;
+                $validator->errors()->add(
+                    'qty',
+                    "Total {$qtyTotal} tidak bisa dibagi rata ke {$jumlahUnit} unit (hasil: " . round($qtyPerUnit, 4) . " per unit). Sesuaikan total atau jumlah unit."
+                );
+                return;
             }
 
-            if ($qtyDiminta > $stokTersedia) {
+            $stokService  = app(StokGudangService::class);
+            $stokTersedia = $stokService->stokMaterial((int) $materialId);
+
+            if ($qtyTotal > $stokTersedia) {
                 $validator->errors()->add(
                     'qty',
                     "Stok tidak mencukupi. Sisa stok tersedia: {$stokTersedia}."

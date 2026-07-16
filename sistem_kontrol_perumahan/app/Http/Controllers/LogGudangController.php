@@ -13,26 +13,34 @@ use App\Services\StokGudangService;
 use App\Services\MaterialConsumptionService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Http\Requests\UpdateLogKeluarRequest;
+use Illuminate\Support\Facades\DB;
 
 class LogGudangController extends Controller
 {
     public function index()
     {
+        $stokService = new StokGudangService();
+        $movingAvg = $stokService->hitungMovingAverage();
+
         return Inertia::render('LogGudang/Index', [
             'logMasuk'  => LogMasukGudang::with('material')->orderByDesc('tanggal')->get(),
             'logKeluar' => LogKeluarHarian::with(['material', 'unit'])->orderByDesc('tanggal')->get(),
             'materials' => Material::orderBy('nama_material')
-                            ->with('latestLogMasuk')
                             ->get(['id', 'kode_material as kode', 'nama_material as nama', 'satuan'])
-                            ->map(fn ($m) => [
-                                'id'             => $m->id,
-                                'kode'           => $m->kode,
-                                'nama'           => $m->nama,
-                                'satuan'         => $m->satuan,
-                                'harga_terakhir' => $m->latestLogMasuk->harga_satuan ?? 0,
-                ]),
+                            ->map(function ($m) use ($movingAvg) {
+                                $data = $movingAvg->get($m->id, ['sisa_stok' => 0, 'harga_rata_rata' => 0]);
+
+                                return [
+                                    'id'             => $m->id,
+                                    'kode'           => $m->kode,
+                                    'nama'           => $m->nama,
+                                    'satuan'         => $m->satuan,
+                                    'harga_terakhir' => $data['harga_rata_rata'],
+                                ];
+                            }),
             'units'     => Unit::orderBy('nama_unit')->get(['id', 'nama_unit', 'zona']),
-            'stok'      => (new StokGudangService())->stokSemuaMaterial(),
+            'stok'      => $stokService->stokSemuaMaterial(),
         ]);
     }
 
@@ -195,14 +203,36 @@ class LogGudangController extends Controller
     {
         $data = $request->validated();
 
-        LogKeluarHarian::create([...$data, 'created_by' => Auth::id()]);
+        $unitIds    = $data['unit_ids'];
+        $jumlahUnit = count($unitIds);
+        $qtyPerUnit = round($data['qty'] / $jumlahUnit, 4);
+        $harga      = $data['harga'];
 
-        $this->syncProgressStatus($data['unit_id']);
+        DB::transaction(function () use ($unitIds, $data, $qtyPerUnit, $harga) {
+            foreach ($unitIds as $unitId) {
+                LogKeluarHarian::create([
+                    'tanggal'     => $data['tanggal'],
+                    'unit_id'     => $unitId,
+                    'material_id' => $data['material_id'],
+                    'qty'         => $qtyPerUnit,
+                    'harga'       => $harga,
+                    'total'       => round($qtyPerUnit * $harga, 2),
+                    'keterangan'  => $data['keterangan'] ?? null,
+                    'created_by'  => Auth::id(),
+                ]);
 
-        return back()->with('success', 'Log keluar berhasil ditambahkan.');
+                $this->syncProgressStatus($unitId);
+            }
+        });
+
+        $pesan = $jumlahUnit > 1
+            ? "Log keluar berhasil ditambahkan ke {$jumlahUnit} unit."
+            : 'Log keluar berhasil ditambahkan.';
+
+        return back()->with('success', $pesan);
     }
 
-    public function updateKeluar(StoreLogKeluarRequest $request, LogKeluarHarian $logKeluar)
+    public function updateKeluar(UpdateLogKeluarRequest $request, LogKeluarHarian $logKeluar)
     {
         $data = $request->validated();
 

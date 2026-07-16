@@ -29,6 +29,10 @@ export default function LogGudangIndex({
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
+    const [qtyMode, setQtyMode] = useState("total"); // "total" | "per_unit"
+    const [qtyInputRaw, setQtyInputRaw] = useState("");
+    const [unitRows, setUnitRows] = useState([""]); // array of unit_id string, default 1 slot kosong
+
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyData, setHistoryData] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
@@ -46,6 +50,18 @@ export default function LogGudangIndex({
                 console.error(err);
                 setLoadingHistory(false);
             });
+    }
+
+    function addUnitRow() {
+        setUnitRows((prev) => [...prev, ""]);
+    }
+
+    function removeUnitRow(index) {
+        setUnitRows((prev) => prev.filter((_, i) => i !== index));
+    }
+
+    function updateUnitRow(index, value) {
+        setUnitRows((prev) => prev.map((v, i) => (i === index ? value : v)));
     }
 
     const masukForm = useForm({
@@ -72,8 +88,19 @@ export default function LogGudangIndex({
     const selectedMaterial = (materials ?? []).find(
         (m) => String(m.id) === String(form.data.material_id),
     );
+    const selectedUnitIds = unitRows.filter((id) => id !== "");
 
-    // Log Keluar: saat material dipilih, harga otomatis ambil dari log masuk terakhir.
+    // Log Keluar (tambah, multi-unit): qty yg dikirim ke backend selalu "total barang",
+    // dihitung dari mode toggle (total langsung, atau per-unit x jumlah unit terpilih).
+    useEffect(() => {
+        if (tab !== "keluar" || editTarget) return;
+        const raw = Number(qtyInputRaw) || 0;
+        const jumlahUnit = selectedUnitIds.length || 0;
+        const totalQty = qtyMode === "total" ? raw : raw * jumlahUnit;
+        keluarForm.setData("qty", totalQty);
+    }, [tab, editTarget, qtyInputRaw, qtyMode, selectedUnitIds]);
+
+    // Log Keluar: saat material dipilih, harga otomatis ambil dari rata-rata bergerak (moving average) stok material tsb.
     useEffect(() => {
         if (tab !== "keluar") return;
         if (!selectedMaterial) return;
@@ -124,11 +151,17 @@ export default function LogGudangIndex({
     function openAdd() {
         setEditTarget(null);
         form.reset();
+        setQtyMode("total");
+        setQtyInputRaw("");
+        setUnitRows([""]);
         setModalOpen(true);
     }
 
     function openEdit(row) {
         setEditTarget(row);
+        setQtyMode("total");
+        setQtyInputRaw("");
+        setUnitRows([""]);
         if (tab === "masuk") {
             masukForm.setData({
                 tanggal: row.tanggal.slice(0, 10),
@@ -167,13 +200,17 @@ export default function LogGudangIndex({
                       options,
                   )
                 : masukForm.post(route("log-gudang.masuk.store"), options);
+        } else if (editTarget) {
+            keluarForm.put(
+                route("log-gudang.keluar.update", editTarget.id),
+                options,
+            );
         } else {
-            editTarget
-                ? keluarForm.put(
-                      route("log-gudang.keluar.update", editTarget.id),
-                      options,
-                  )
-                : keluarForm.post(route("log-gudang.keluar.store"), options);
+            keluarForm.transform((data) => ({
+                ...data,
+                unit_ids: selectedUnitIds,
+            }));
+            keluarForm.post(route("log-gudang.keluar.store"), options);
         }
     }
 
@@ -550,7 +587,7 @@ export default function LogGudangIndex({
                                     />
                                 )}
 
-                                {tab === "keluar" && (
+                                {tab === "keluar" && editTarget && (
                                     <label className="block">
                                         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                             Unit
@@ -583,6 +620,101 @@ export default function LogGudangIndex({
                                     </label>
                                 )}
 
+                                {tab === "keluar" && !editTarget && (
+                                    <div>
+                                        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            Unit Tujuan
+                                        </span>
+                                        <div className="space-y-2">
+                                            {unitRows.map((unitId, index) => {
+                                                const usedElsewhere =
+                                                    unitRows.filter(
+                                                        (_, i) => i !== index,
+                                                    );
+                                                const availableUnits =
+                                                    units.filter(
+                                                        (u) =>
+                                                            !usedElsewhere.includes(
+                                                                String(u.id),
+                                                            ),
+                                                    );
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="flex gap-2"
+                                                    >
+                                                        <select
+                                                            value={unitId}
+                                                            onChange={(e) =>
+                                                                updateUnitRow(
+                                                                    index,
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="flex-1 rounded-xl border border-border bg-input-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                                                        >
+                                                            <option value="">
+                                                                — pilih unit —
+                                                            </option>
+                                                            {availableUnits.map(
+                                                                (u) => (
+                                                                    <option
+                                                                        key={
+                                                                            u.id
+                                                                        }
+                                                                        value={String(
+                                                                            u.id,
+                                                                        )}
+                                                                    >
+                                                                        {
+                                                                            u.nama_unit
+                                                                        }{" "}
+                                                                        — Zona{" "}
+                                                                        {
+                                                                            u.zona
+                                                                        }
+                                                                    </option>
+                                                                ),
+                                                            )}
+                                                        </select>
+                                                        {unitRows.length >
+                                                            1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeUnitRow(
+                                                                        index,
+                                                                    )
+                                                                }
+                                                                className="cursor-pointer rounded-xl border border-border px-3 text-muted-foreground hover:text-red-500"
+                                                            >
+                                                                <X
+                                                                    size={14}
+                                                                />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        {unitRows.length < units.length && (
+                                            <button
+                                                type="button"
+                                                onClick={addUnitRow}
+                                                className="mt-2 flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                                            >
+                                                <Plus size={12} /> Tambah Unit
+                                            </button>
+                                        )}
+                                        {keluarForm.errors.unit_ids && (
+                                            <span className="mt-1 block text-xs text-red-500">
+                                                {keluarForm.errors.unit_ids}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
                                 <MaterialSelect
                                     materials={materialsTersedia}
                                     value={form.data.material_id}
@@ -606,14 +738,91 @@ export default function LogGudangIndex({
                                     />
                                 </div>
 
+                                {tab === "keluar" && !editTarget && (
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            Input Berdasarkan
+                                        </span>
+                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                            <input
+                                                type="radio"
+                                                checked={qtyMode === "total"}
+                                                onChange={() =>
+                                                    setQtyMode("total")
+                                                }
+                                            />
+                                            Total Barang
+                                        </label>
+                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                            <input
+                                                type="radio"
+                                                checked={
+                                                    qtyMode === "per_unit"
+                                                }
+                                                onChange={() =>
+                                                    setQtyMode("per_unit")
+                                                }
+                                            />
+                                            Per Unit
+                                        </label>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-3">
-                                    <Field
-                                        label={`Qty${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`}
-                                        type="number"
-                                        value={form.data.qty}
-                                        onChange={(v) => form.setData("qty", v)}
-                                        error={form.errors.qty}
-                                    />
+                                    <div>
+                                        <Field
+                                            label={
+                                                tab === "keluar" &&
+                                                !editTarget
+                                                    ? qtyMode === "total"
+                                                        ? `Total Barang${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
+                                                        : `Qty per Unit${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
+                                                    : `Qty${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
+                                            }
+                                            type="number"
+                                            value={
+                                                tab === "keluar" &&
+                                                !editTarget
+                                                    ? qtyInputRaw
+                                                    : form.data.qty
+                                            }
+                                            onChange={
+                                                tab === "keluar" &&
+                                                !editTarget
+                                                    ? setQtyInputRaw
+                                                    : (v) =>
+                                                          form.setData(
+                                                              "qty",
+                                                              v,
+                                                          )
+                                            }
+                                            error={form.errors.qty}
+                                        />
+                                        {tab === "keluar" &&
+                                            !editTarget &&
+                                            selectedUnitIds.length > 0 &&
+                                            Number(qtyInputRaw) > 0 && (
+                                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                                    {qtyMode === "total"
+                                                        ? `≈ ${(
+                                                              Number(
+                                                                  qtyInputRaw,
+                                                              ) /
+                                                              selectedUnitIds.length
+                                                          ).toLocaleString(
+                                                              "id-ID",
+                                                          )} per unit`
+                                                        : `Total: ${(
+                                                              Number(
+                                                                  qtyInputRaw,
+                                                              ) *
+                                                              selectedUnitIds.length
+                                                          ).toLocaleString(
+                                                              "id-ID",
+                                                          )}`}
+                                                </p>
+                                            )}
+                                    </div>
 
                                     {tab === "masuk" ? (
                                         <CurrencyField
@@ -669,7 +878,12 @@ export default function LogGudangIndex({
                             <div className="mt-6 flex gap-2">
                                 <button
                                     type="submit"
-                                    disabled={form.processing}
+                                    disabled={
+                                        form.processing ||
+                                        (tab === "keluar" &&
+                                            !editTarget &&
+                                            selectedUnitIds.length === 0)
+                                    }
                                     className="cursor-pointer flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white disabled:opacity-60"
                                 >
                                     {editTarget ? "Simpan Perubahan" : "Tambah"}
