@@ -10,28 +10,91 @@ use App\Models\LogMasukGudang;
 use App\Models\Material;
 use App\Models\Unit;
 use App\Services\StokGudangService;
+use App\Services\MaterialConsumptionService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Http\Requests\UpdateLogKeluarRequest;
+use Illuminate\Support\Facades\DB;
 
 class LogGudangController extends Controller
 {
     public function index()
     {
+        $stokService = new StokGudangService();
+        $movingAvg = $stokService->hitungMovingAverage();
+        $isSuperAdmin = Auth::user()?->hasRole('Super Admin') ?? false;
+
+        $logMasukQuery = LogMasukGudang::with('material');
+        $logKeluarQuery = LogKeluarHarian::with(['material', 'unit']);
+
+        if ($isSuperAdmin) {
+            $logMasukQuery = $logMasukQuery
+                ->withTrashed()
+                ->with('latestHistory.user');
+
+            $logKeluarQuery = $logKeluarQuery
+                ->withTrashed()
+                ->with('latestHistory.user');
+        }
+
+        $logMasuk = $logMasukQuery->orderByDesc('tanggal')->get()->map(function ($log) use ($isSuperAdmin) {
+            $row = $log->toArray();
+
+            if ($isSuperAdmin) {
+                $latestHistory = $log->histories->first();
+                $row['row_status'] = $log->deleted_at
+                    ? 'deleted'
+                    : ($latestHistory && $latestHistory->action === 'update' ? 'edited' : null);
+                $row['row_status_label'] = $row['row_status'] === 'deleted'
+                    ? 'Dihapus'
+                    : ($row['row_status'] === 'edited' ? 'Diedit' : null);
+                $row['row_status_by'] = optional($latestHistory->user)->name;
+                $row['row_status_at'] = optional($latestHistory->created_at)
+                    ? optional($latestHistory->created_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                    : null;
+            }
+
+            return $row;
+        });
+
+        $logKeluar = $logKeluarQuery->orderByDesc('tanggal')->get()->map(function ($log) use ($isSuperAdmin) {
+            $row = $log->toArray();
+
+            if ($isSuperAdmin) {
+                $latestHistory = $log->histories->first();
+                $row['row_status'] = $log->deleted_at
+                    ? 'deleted'
+                    : ($latestHistory && $latestHistory->action === 'update' ? 'edited' : null);
+                $row['row_status_label'] = $row['row_status'] === 'deleted'
+                    ? 'Dihapus'
+                    : ($row['row_status'] === 'edited' ? 'Diedit' : null);
+                $row['row_status_by'] = optional($latestHistory->user)->name;
+                $row['row_status_at'] = optional($latestHistory->created_at)
+                    ? optional($latestHistory->created_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                    : null;
+            }
+
+            return $row;
+        });
+
         return Inertia::render('LogGudang/Index', [
-            'logMasuk'  => LogMasukGudang::with('material')->orderByDesc('tanggal')->get(),
-            'logKeluar' => LogKeluarHarian::with(['material', 'unit'])->orderByDesc('tanggal')->get(),
+            'logMasuk'  => $logMasuk,
+            'logKeluar' => $logKeluar,
             'materials' => Material::orderBy('nama_material')
-                            ->with('latestLogMasuk')
                             ->get(['id', 'kode_material as kode', 'nama_material as nama', 'satuan'])
-                            ->map(fn ($m) => [
-                                'id'             => $m->id,
-                                'kode'           => $m->kode,
-                                'nama'           => $m->nama,
-                                'satuan'         => $m->satuan,
-                                'harga_terakhir' => $m->latestLogMasuk->harga_satuan ?? 0,
-                ]),
+                            ->map(function ($m) use ($movingAvg) {
+                                $data = $movingAvg->get($m->id, ['sisa_stok' => 0, 'harga_rata_rata' => 0]);
+
+                                return [
+                                    'id'             => $m->id,
+                                    'kode'           => $m->kode,
+                                    'nama'           => $m->nama,
+                                    'satuan'         => $m->satuan,
+                                    'harga_terakhir' => $data['harga_rata_rata'],
+                                ];
+                            }),
             'units'     => Unit::orderBy('nama_unit')->get(['id', 'nama_unit', 'zona']),
-            'stok'      => (new StokGudangService())->stokSemuaMaterial(),
+            'stok'      => $stokService->stokSemuaMaterial(),
         ]);
     }
 
@@ -194,14 +257,36 @@ class LogGudangController extends Controller
     {
         $data = $request->validated();
 
-        LogKeluarHarian::create([...$data, 'created_by' => Auth::id()]);
+        $unitIds    = $data['unit_ids'];
+        $jumlahUnit = count($unitIds);
+        $qtyPerUnit = round($data['qty'] / $jumlahUnit, 4);
+        $harga      = $data['harga'];
 
-        $this->syncProgressStatus($data['unit_id']);
+        DB::transaction(function () use ($unitIds, $data, $qtyPerUnit, $harga) {
+            foreach ($unitIds as $unitId) {
+                LogKeluarHarian::create([
+                    'tanggal'     => $data['tanggal'],
+                    'unit_id'     => $unitId,
+                    'material_id' => $data['material_id'],
+                    'qty'         => $qtyPerUnit,
+                    'harga'       => $harga,
+                    'total'       => round($qtyPerUnit * $harga, 2),
+                    'keterangan'  => $data['keterangan'] ?? null,
+                    'created_by'  => Auth::id(),
+                ]);
 
-        return back()->with('success', 'Log keluar berhasil ditambahkan.');
+                $this->syncProgressStatus($unitId);
+            }
+        });
+
+        $pesan = $jumlahUnit > 1
+            ? "Log keluar berhasil ditambahkan ke {$jumlahUnit} unit."
+            : 'Log keluar berhasil ditambahkan.';
+
+        return back()->with('success', $pesan);
     }
 
-    public function updateKeluar(StoreLogKeluarRequest $request, LogKeluarHarian $logKeluar)
+    public function updateKeluar(UpdateLogKeluarRequest $request, LogKeluarHarian $logKeluar)
     {
         $data = $request->validated();
 
@@ -232,12 +317,15 @@ class LogGudangController extends Controller
             ->first();
 
         if ($progressTerakhir) {
-            $hasil = $this->consumptionService->evaluasiUnit(
+            $hasil = (new MaterialConsumptionService())->evaluasiUnit(
                 $unit,
                 $progressTerakhir->progress_percent
             );
 
-            $progressTerakhir->update(['status' => $hasil['status']]);
+            $progressTerakhir->update([
+    'status_material' => $hasil['status'],
+    'detail_material' => $hasil['detail'],
+]);
         }
     }
 }

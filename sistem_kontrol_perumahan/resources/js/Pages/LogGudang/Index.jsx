@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect  } from "react";
 import { Head, useForm, router, usePage } from "@inertiajs/react";
-import { Plus, Edit3, Trash2, X, History } from "lucide-react";
+import { Plus, Edit3, Trash2, X, History, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import SectionHeader from "@/Components/SectionHeader";
 import TableCard from "@/Components/TableCard";
@@ -29,6 +29,18 @@ export default function LogGudangIndex({
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
+    const [qtyMode, setQtyMode] = useState("total"); // "total" | "per_unit"
+    const [qtyInputRaw, setQtyInputRaw] = useState("");
+    const [unitRows, setUnitRows] = useState([""]); // array of unit_id string, default 1 slot kosong
+
+    const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+    const [pageSizeMasuk, setPageSizeMasuk] = useState(10);
+    const [pageMasuk, setPageMasuk] = useState(1);
+    const [pageSizeKeluar, setPageSizeKeluar] = useState(10);
+    const [pageKeluar, setPageKeluar] = useState(1);
+    const [stokQuery, setStokQuery] = useState("");
+    const [stokVisible, setStokVisible] = useState(5);
+
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyData, setHistoryData] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
@@ -46,6 +58,18 @@ export default function LogGudangIndex({
                 console.error(err);
                 setLoadingHistory(false);
             });
+    }
+
+    function addUnitRow() {
+        setUnitRows((prev) => [...prev, ""]);
+    }
+
+    function removeUnitRow(index) {
+        setUnitRows((prev) => prev.filter((_, i) => i !== index));
+    }
+
+    function updateUnitRow(index, value) {
+        setUnitRows((prev) => prev.map((v, i) => (i === index ? value : v)));
     }
 
     const masukForm = useForm({
@@ -72,8 +96,19 @@ export default function LogGudangIndex({
     const selectedMaterial = (materials ?? []).find(
         (m) => String(m.id) === String(form.data.material_id),
     );
+    const selectedUnitIds = unitRows.filter((id) => id !== "");
 
-    // Log Keluar: saat material dipilih, harga otomatis ambil dari log masuk terakhir.
+    // Log Keluar (tambah, multi-unit): qty yg dikirim ke backend selalu "total barang",
+    // dihitung dari mode toggle (total langsung, atau per-unit x jumlah unit terpilih).
+    useEffect(() => {
+        if (tab !== "keluar" || editTarget) return;
+        const raw = Number(qtyInputRaw) || 0;
+        const jumlahUnit = selectedUnitIds.length || 0;
+        const totalQty = qtyMode === "total" ? raw : raw * jumlahUnit;
+        keluarForm.setData("qty", totalQty);
+    }, [tab, editTarget, qtyInputRaw, qtyMode, selectedUnitIds]);
+
+    // Log Keluar: saat material dipilih, harga otomatis ambil dari rata-rata bergerak (moving average) stok material tsb.
     useEffect(() => {
         if (tab !== "keluar") return;
         if (!selectedMaterial) return;
@@ -105,6 +140,14 @@ export default function LogGudangIndex({
         [logMasuk, search],
     );
 
+    const totalPagesMasuk = Math.max(1, Math.ceil(filteredMasuk.length / pageSizeMasuk));
+    const paginatedMasuk = useMemo(() => {
+        const start = (pageMasuk - 1) * pageSizeMasuk;
+        return filteredMasuk.slice(start, start + pageSizeMasuk);
+    }, [filteredMasuk, pageMasuk, pageSizeMasuk]);
+    const rangeStartMasuk = filteredMasuk.length === 0 ? 0 : (pageMasuk - 1) * pageSizeMasuk + 1;
+    const rangeEndMasuk = Math.min(pageMasuk * pageSizeMasuk, filteredMasuk.length);
+
     const materialsTersedia = useMemo(() => {
         if (tab !== "keluar") return materials;
         const stokMap = new Map(stok.map((s) => [s.material_id, s.sisa_stok]));
@@ -121,14 +164,44 @@ export default function LogGudangIndex({
         [logKeluar, search],
     );
 
+    const totalPagesKeluar = Math.max(1, Math.ceil(filteredKeluar.length / pageSizeKeluar));
+    const paginatedKeluar = useMemo(() => {
+        const start = (pageKeluar - 1) * pageSizeKeluar;
+        return filteredKeluar.slice(start, start + pageSizeKeluar);
+    }, [filteredKeluar, pageKeluar, pageSizeKeluar]);
+    const rangeStartKeluar = filteredKeluar.length === 0 ? 0 : (pageKeluar - 1) * pageSizeKeluar + 1;
+    const rangeEndKeluar = Math.min(pageKeluar * pageSizeKeluar, filteredKeluar.length);
+
     function openAdd() {
         setEditTarget(null);
         form.reset();
+        setQtyMode("total");
+        setQtyInputRaw("");
+        setUnitRows([""]);
         setModalOpen(true);
     }
 
+    useEffect(() => {
+        setPageMasuk(1);
+    }, [filteredMasuk.length, pageSizeMasuk]);
+
+    useEffect(() => {
+        setPageKeluar(1);
+    }, [filteredKeluar.length, pageSizeKeluar]);
+
+    useEffect(() => {
+        setPageMasuk((p) => Math.min(p, totalPagesMasuk));
+    }, [totalPagesMasuk]);
+
+    useEffect(() => {
+        setPageKeluar((p) => Math.min(p, totalPagesKeluar));
+    }, [totalPagesKeluar]);
+
     function openEdit(row) {
         setEditTarget(row);
+        setQtyMode("total");
+        setQtyInputRaw("");
+        setUnitRows([""]);
         if (tab === "masuk") {
             masukForm.setData({
                 tanggal: row.tanggal.slice(0, 10),
@@ -167,13 +240,17 @@ export default function LogGudangIndex({
                       options,
                   )
                 : masukForm.post(route("log-gudang.masuk.store"), options);
+        } else if (editTarget) {
+            keluarForm.put(
+                route("log-gudang.keluar.update", editTarget.id),
+                options,
+            );
         } else {
-            editTarget
-                ? keluarForm.put(
-                      route("log-gudang.keluar.update", editTarget.id),
-                      options,
-                  )
-                : keluarForm.post(route("log-gudang.keluar.store"), options);
+            keluarForm.transform((data) => ({
+                ...data,
+                unit_ids: selectedUnitIds,
+            }));
+            keluarForm.post(route("log-gudang.keluar.store"), options);
         }
     }
 
@@ -284,7 +361,7 @@ export default function LogGudangIndex({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredMasuk.map((r) => (
+                                        {paginatedMasuk.map((r) => (
                                             <tr
                                                 key={r.id}
                                                 className="border-t border-border hover:bg-secondary/50"
@@ -305,6 +382,17 @@ export default function LogGudangIndex({
                                                 </td>
                                                 <td className="px-4 py-3 font-semibold text-xs">
                                                     {r.material?.nama_material}
+                                                    {r.deleted_at ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-red-600">
+                                                            Dihapus oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : r.row_status === "edited" ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-amber-700">
+                                                            Diedit oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
                                                     {Number(
@@ -349,6 +437,32 @@ export default function LogGudangIndex({
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+                                <span>
+                                    Menampilkan {rangeStartMasuk}–{rangeEndMasuk} dari {filteredMasuk.length} log
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageMasuk((p) => Math.max(1, p - 1))}
+                                        disabled={pageMasuk <= 1}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <span className="font-semibold text-foreground">
+                                        Halaman {pageMasuk} / {totalPagesMasuk}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageMasuk((p) => Math.min(totalPagesMasuk, p + 1))}
+                                        disabled={pageMasuk >= totalPagesMasuk}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
                             </div>
                         </TableCard>
                     ) : (
@@ -396,7 +510,7 @@ export default function LogGudangIndex({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredKeluar.map((r) => (
+                                        {paginatedKeluar.map((r) => (
                                             <tr
                                                 key={r.id}
                                                 className="border-t border-border hover:bg-secondary/50"
@@ -405,12 +519,14 @@ export default function LogGudangIndex({
                                                     {r.tanggal.slice(0, 10)}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="rounded-md bg-sky-50 px-2 py-0.5 font-mono text-xs font-bold text-sky-700">
-                                                        {r.unit?.nama_unit}
-                                                    </span>
-                                                    <span className="ml-1 text-[11px] text-muted-foreground">
-                                                        Zona {r.unit?.zona}
-                                                    </span>
+                                                    <div className="space-y-1">
+                                                        <span className="inline-flex rounded-md bg-sky-50 px-2 py-0.5 font-mono text-xs font-bold text-sky-700">
+                                                            {r.unit?.nama_unit}
+                                                        </span>
+                                                        <div className="text-[11px] text-muted-foreground">
+                                                            Zona {r.unit?.zona}
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-bold text-primary">
@@ -422,6 +538,17 @@ export default function LogGudangIndex({
                                                 </td>
                                                 <td className="px-4 py-3 font-semibold text-xs">
                                                     {r.material?.nama_material}
+                                                    {r.deleted_at ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-red-600">
+                                                            Dihapus oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : r.row_status === "edited" ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-amber-700">
+                                                            Diedit oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
                                                     {Number(
@@ -463,49 +590,139 @@ export default function LogGudangIndex({
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+                                <span>
+                                    Menampilkan {rangeStartKeluar}–{rangeEndKeluar} dari {filteredKeluar.length} log
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageKeluar((p) => Math.max(1, p - 1))}
+                                        disabled={pageKeluar <= 1}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <span className="font-semibold text-foreground">
+                                        Halaman {pageKeluar} / {totalPagesKeluar}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPageKeluar((p) => Math.min(totalPagesKeluar, p + 1))}
+                                        disabled={pageKeluar >= totalPagesKeluar}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                                    >
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
                         </TableCard>
                     )}
 
                     <div className="space-y-2.5">
-                        <p className="font-bold">Stok Real-time</p>
-                        {stok.map((s) => {
-                            const pct =
-                                s.total_masuk > 0
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="font-bold">Stok Real-time</p>
+                            <div className="relative">
+                                <Search
+                                    size={13}
+                                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Cari material…"
+                                    value={stokQuery}
+                                    onChange={(e) => {
+                                        setStokQuery(e.target.value);
+                                        setStokVisible(5);
+                                    }}
+                                    className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                            </div>
+                        </div>
+
+                        {stok
+                            .filter((s) =>
+                                s.nama
+                                    .toLowerCase()
+                                    .includes(stokQuery.toLowerCase()),
+                            )
+                            .slice(0, stokVisible)
+                            .map((s) => {
+                                const pct = s.total_masuk > 0
                                     ? Math.min(
                                           100,
                                           (s.sisa_stok / s.total_masuk) * 100,
                                       )
                                     : 0;
-                            const barColor = s.is_warning
-                                ? "bg-red-500"
-                                : pct > 50
-                                  ? "bg-emerald-500"
-                                  : "bg-amber-400";
-                            return (
-                                <div
-                                    key={s.material_id}
-                                    className="rounded-xl border border-border bg-white p-3"
+                                const barColor = s.is_warning
+                                    ? "bg-red-500"
+                                    : pct > 50
+                                      ? "bg-emerald-500"
+                                      : "bg-amber-400";
+                                return (
+                                    <div
+                                        key={s.material_id}
+                                        className="rounded-xl border border-border bg-white p-3"
+                                    >
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-semibold">
+                                                {s.nama}
+                                            </span>
+                                            <span className="font-mono text-xs font-bold">
+                                                {s.sisa_stok.toLocaleString("id-ID")} {s.satuan}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
+                                            {pct > 0 && (
+                                                <div
+                                                    className={`h-1.5 rounded-full ${barColor}`}
+                                                    style={{ width: `${pct}%` }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="mt-1 text-[11px] text-muted-foreground">
+                                            {formatRupiah(s.nilai_rupiah)}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            {stok.filter((s) =>
+                                s.nama
+                                    .toLowerCase()
+                                    .includes(stokQuery.toLowerCase()),
+                            ).length > stokVisible && (
+                                <button
+                                    type="button"
+                                    onClick={() => setStokVisible((v) => v + 5)}
+                                    className="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
                                 >
-                                    <div className="flex justify-between text-sm">
-                                        <span className="font-semibold">
-                                            {s.nama}
-                                        </span>
-                                        <span className="font-mono text-xs font-bold">
-                                            {s.sisa_stok} {s.satuan}
-                                        </span>
-                                    </div>
-                                    <div className="mt-2 h-1.5 rounded-full bg-secondary">
-                                        <div
-                                            className={`h-1.5 rounded-full ${barColor}`}
-                                            style={{ width: `${pct}%` }}
-                                        />
-                                    </div>
-                                    <div className="mt-1 text-[11px] text-muted-foreground">
-                                        {formatRupiah(s.nilai_rupiah)}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                    Tampilkan lainnya
+                                </button>
+                            )}
+                            {stokVisible > 5 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setStokVisible(5)}
+                                    className="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+                                >
+                                    Sembunyikan
+                                </button>
+                            )}
+                        </div>
+
+                        {stok.filter((s) =>
+                            s.nama
+                                .toLowerCase()
+                                .includes(stokQuery.toLowerCase()),
+                        ).length === 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                {stokQuery
+                                    ? `Tidak ada hasil untuk "${stokQuery}".`
+                                    : "Belum ada data stok gudang."}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -550,7 +767,7 @@ export default function LogGudangIndex({
                                     />
                                 )}
 
-                                {tab === "keluar" && (
+                                {tab === "keluar" && editTarget && (
                                     <label className="block">
                                         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                             Unit
@@ -583,6 +800,101 @@ export default function LogGudangIndex({
                                     </label>
                                 )}
 
+                                {tab === "keluar" && !editTarget && (
+                                    <div>
+                                        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            Unit Tujuan
+                                        </span>
+                                        <div className="space-y-2">
+                                            {unitRows.map((unitId, index) => {
+                                                const usedElsewhere =
+                                                    unitRows.filter(
+                                                        (_, i) => i !== index,
+                                                    );
+                                                const availableUnits =
+                                                    units.filter(
+                                                        (u) =>
+                                                            !usedElsewhere.includes(
+                                                                String(u.id),
+                                                            ),
+                                                    );
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="flex gap-2"
+                                                    >
+                                                        <select
+                                                            value={unitId}
+                                                            onChange={(e) =>
+                                                                updateUnitRow(
+                                                                    index,
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="flex-1 rounded-xl border border-border bg-input-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+                                                        >
+                                                            <option value="">
+                                                                — pilih unit —
+                                                            </option>
+                                                            {availableUnits.map(
+                                                                (u) => (
+                                                                    <option
+                                                                        key={
+                                                                            u.id
+                                                                        }
+                                                                        value={String(
+                                                                            u.id,
+                                                                        )}
+                                                                    >
+                                                                        {
+                                                                            u.nama_unit
+                                                                        }{" "}
+                                                                        — Zona{" "}
+                                                                        {
+                                                                            u.zona
+                                                                        }
+                                                                    </option>
+                                                                ),
+                                                            )}
+                                                        </select>
+                                                        {unitRows.length >
+                                                            1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeUnitRow(
+                                                                        index,
+                                                                    )
+                                                                }
+                                                                className="cursor-pointer rounded-xl border border-border px-3 text-muted-foreground hover:text-red-500"
+                                                            >
+                                                                <X
+                                                                    size={14}
+                                                                />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        {unitRows.length < units.length && (
+                                            <button
+                                                type="button"
+                                                onClick={addUnitRow}
+                                                className="mt-2 flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                                            >
+                                                <Plus size={12} /> Tambah Unit
+                                            </button>
+                                        )}
+                                        {keluarForm.errors.unit_ids && (
+                                            <span className="mt-1 block text-xs text-red-500">
+                                                {keluarForm.errors.unit_ids}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
                                 <MaterialSelect
                                     materials={materialsTersedia}
                                     value={form.data.material_id}
@@ -606,14 +918,91 @@ export default function LogGudangIndex({
                                     />
                                 </div>
 
+                                {tab === "keluar" && !editTarget && (
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            Input Berdasarkan
+                                        </span>
+                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                            <input
+                                                type="radio"
+                                                checked={qtyMode === "total"}
+                                                onChange={() =>
+                                                    setQtyMode("total")
+                                                }
+                                            />
+                                            Total Barang
+                                        </label>
+                                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                            <input
+                                                type="radio"
+                                                checked={
+                                                    qtyMode === "per_unit"
+                                                }
+                                                onChange={() =>
+                                                    setQtyMode("per_unit")
+                                                }
+                                            />
+                                            Per Unit
+                                        </label>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-3">
-                                    <Field
-                                        label={`Qty${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`}
-                                        type="number"
-                                        value={form.data.qty}
-                                        onChange={(v) => form.setData("qty", v)}
-                                        error={form.errors.qty}
-                                    />
+                                    <div>
+                                        <Field
+                                            label={
+                                                tab === "keluar" &&
+                                                !editTarget
+                                                    ? qtyMode === "total"
+                                                        ? `Total Barang${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
+                                                        : `Qty per Unit${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
+                                                    : `Qty${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
+                                            }
+                                            type="number"
+                                            value={
+                                                tab === "keluar" &&
+                                                !editTarget
+                                                    ? qtyInputRaw
+                                                    : form.data.qty
+                                            }
+                                            onChange={
+                                                tab === "keluar" &&
+                                                !editTarget
+                                                    ? setQtyInputRaw
+                                                    : (v) =>
+                                                          form.setData(
+                                                              "qty",
+                                                              v,
+                                                          )
+                                            }
+                                            error={form.errors.qty}
+                                        />
+                                        {tab === "keluar" &&
+                                            !editTarget &&
+                                            selectedUnitIds.length > 0 &&
+                                            Number(qtyInputRaw) > 0 && (
+                                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                                    {qtyMode === "total"
+                                                        ? `≈ ${(
+                                                              Number(
+                                                                  qtyInputRaw,
+                                                              ) /
+                                                              selectedUnitIds.length
+                                                          ).toLocaleString(
+                                                              "id-ID",
+                                                          )} per unit`
+                                                        : `Total: ${(
+                                                              Number(
+                                                                  qtyInputRaw,
+                                                              ) *
+                                                              selectedUnitIds.length
+                                                          ).toLocaleString(
+                                                              "id-ID",
+                                                          )}`}
+                                                </p>
+                                            )}
+                                    </div>
 
                                     {tab === "masuk" ? (
                                         <CurrencyField
@@ -669,7 +1058,12 @@ export default function LogGudangIndex({
                             <div className="mt-6 flex gap-2">
                                 <button
                                     type="submit"
-                                    disabled={form.processing}
+                                    disabled={
+                                        form.processing ||
+                                        (tab === "keluar" &&
+                                            !editTarget &&
+                                            selectedUnitIds.length === 0)
+                                    }
                                     className="cursor-pointer flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white disabled:opacity-60"
                                 >
                                     {editTarget ? "Simpan Perubahan" : "Tambah"}
