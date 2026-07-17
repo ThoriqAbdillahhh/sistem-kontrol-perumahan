@@ -12,6 +12,7 @@ import {
 import RoleBadge from "@/Components/RoleBadge";
 import ConfirmDialog from "@/Components/ConfirmDialog";
 import { useState } from "react";
+import logo from "@/assets/tabarok.jpg";    
 
 export default function Sidebar() {
     const { auth } = usePage().props;
@@ -86,17 +87,14 @@ export default function Sidebar() {
     return (
         <aside className="fixed inset-y-0 left-0 z-40 fixed inset-y-0 left-0 z-40 flex h-screen w-72 flex-col bg-sidebar text-sidebar-foreground">
             <div className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
-                <div className="grid size-10 place-items-center rounded-xl bg-primary text-white shadow-md">
-                    <Building2 size={20} />
+                <div className="grid size-10 place-items-center overflow-hidden rounded-xl">
+                    <img
+                        src={logo}
+                        alt="Microdata"
+                        className="h-full w-full object-contain"
+                    />
                 </div>
-                <div>
-                    <p className="text-sm font-bold text-white">
-                        EstateControl
-                    </p>
-                    <p className="text-[11px] text-sidebar-foreground/50">
-                        Monitoring Perumahan
-                    </p>
-                </div>
+                
             </div>
 
             <nav className="flex-1 overflow-y-auto px-4 py-5">

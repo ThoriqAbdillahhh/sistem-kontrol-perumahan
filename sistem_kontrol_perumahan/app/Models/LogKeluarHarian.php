@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\LogGudangHistory;
 
 class LogKeluarHarian extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'log_keluar_harian';
 
     protected $fillable = [
@@ -16,7 +19,22 @@ class LogKeluarHarian extends Model
 
     protected $casts = [
         'tanggal' => 'date',
+        'deleted_at' => 'datetime',
     ];
+
+    public function histories()
+    {
+        return $this->hasMany(LogGudangHistory::class, 'log_id')
+            ->where('tipe_log', 'keluar')
+            ->latest('created_at');
+    }
+
+    public function latestHistory()
+    {
+        return $this->hasOne(LogGudangHistory::class, 'log_id')
+            ->where('tipe_log', 'keluar')
+            ->latestOfMany('created_at');
+    }
 
     protected static function booted()
     {

@@ -3,22 +3,47 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\LogGudangHistory;
 
 class LogMasukGudang extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'log_masuk_gudang';
 
-    protected $fillable = 
-    [
-    'tanggal', 
-    'supplier', 
-    'material_id', 
-    'qty', 
-    'harga_satuan', 
-    'total_harga', 
-    'keterangan',
-    'created_by'];
+    protected $fillable = [
+        'tanggal',
+        'supplier',
+        'material_id',
+        'qty',
+        'harga_satuan',
+        'total_harga',
+        'keterangan',
+        'created_by',
+    ];
+
+    protected $casts = [
+        'tanggal' => 'date',
+        'qty' => 'decimal:2',
+        'harga_satuan' => 'decimal:2',
+        'total_harga' => 'decimal:2',
+        'deleted_at' => 'datetime',
+    ];
+
+    public function histories()
+    {
+        return $this->hasMany(LogGudangHistory::class, 'log_id')
+            ->where('tipe_log', 'masuk')
+            ->latest('created_at');
+    }
+
+    public function latestHistory()
+    {
+        return $this->hasOne(LogGudangHistory::class, 'log_id')
+            ->where('tipe_log', 'masuk')
+            ->latestOfMany('created_at');
+    }
 
     protected static function booted()
     {
@@ -54,17 +79,7 @@ class LogMasukGudang extends Model
         });
     }
 
-    protected function casts(): array
-    {
-        return [
-            'tanggal' => 'date',
-            'qty' => 'decimal:2',
-            'harga_satuan' => 'decimal:2',
-            'total_harga' => 'decimal:2',
-        ];
-    }
-    
-        public function material()
+    public function material()
     {
 
         return $this->belongsTo(Material::class);
