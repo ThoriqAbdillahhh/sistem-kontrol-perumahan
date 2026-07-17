@@ -38,6 +38,10 @@ function highlightText(text, keyword) {
     );
 }
 
+function normalizeUnitCode(value, maxLength) {
+    return value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, maxLength);
+}
+
 export default function UnitIndex({ units }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [editingUnit, setEditingUnit] = useState(null);
@@ -172,8 +176,8 @@ export default function UnitIndex({ units }) {
     function openEdit(unit) {
         setEditingUnit(unit);
         setData({
-            nama_unit: unit.nama_unit,
-            zona: unit.zona,
+            nama_unit: normalizeUnitCode(unit.nama_unit ?? '', 4),
+            zona: normalizeUnitCode(unit.zona ?? '', 2),
             status: unit.status,
             tukang: unit.tukang,
             tanggal_mulai: unit.tanggal_mulai ?? '',
@@ -250,7 +254,7 @@ export default function UnitIndex({ units }) {
 
                                 <button
                                     onClick={toggleSelectMode}
-                                    className={`whitespace-nowrap rounded-xl border px-4 py-2 text-xs font-bold transition-colors ${
+                                    className={`cursor-pointer whitespace-nowrap rounded-xl border px-4 py-2 text-xs font-bold transition-colors ${
                                         selectMode
                                             ? 'border-sky-600 bg-sky-50 text-sky-700'
                                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'
@@ -261,7 +265,7 @@ export default function UnitIndex({ units }) {
 
                                 <button
                                     onClick={openAdd}
-                                    className="whitespace-nowrap rounded-xl bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-600/90"
+                                    className="cursor-pointer whitespace-nowrap rounded-xl bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-600/90"
                                 >
                                     + Tambah Unit
                                 </button>
@@ -277,13 +281,13 @@ export default function UnitIndex({ units }) {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={clearSelection}
-                                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
+                                        className="cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
                                     >
                                         Batal Pilih
                                     </button>
                                     <button
                                         onClick={() => setBulkDeleteOpen(true)}
-                                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600/90"
+                                        className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600/90"
                                     >
                                         <Trash2 size={13} />
                                         Hapus Terpilih
@@ -368,14 +372,14 @@ export default function UnitIndex({ units }) {
                                                     <button
                                                         onClick={() => openEdit(unit)}
                                                         title="Edit"
-                                                        className="rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:border-sky-600 hover:text-sky-600"
+                                                        className="cursor-pointer rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:border-sky-600 hover:text-sky-600"
                                                     >
                                                         <Pencil size={13} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(unit)}
                                                         title="Hapus"
-                                                        className="rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:border-red-400 hover:text-red-500"
+                                                        className="cursor-pointer rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:border-red-400 hover:text-red-500"
                                                     >
                                                         <Trash2 size={13} />
                                                     </button>
@@ -404,7 +408,7 @@ export default function UnitIndex({ units }) {
                                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                         disabled={currentPage === 1}
                                         title="Sebelumnya"
-                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                                        className="cursor-pointer inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
                                     >
                                         <ChevronLeft size={15} />
                                     </button>
@@ -415,7 +419,7 @@ export default function UnitIndex({ units }) {
                                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                         disabled={currentPage === totalPages}
                                         title="Selanjutnya"
-                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                                        className="cursor-pointer inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
                                     >
                                         <ChevronRight size={15} />
                                     </button>
@@ -440,7 +444,7 @@ export default function UnitIndex({ units }) {
                                     </h2>
                                     <button
                                         onClick={() => setDrawerOpen(false)}
-                                        className="rounded-lg p-1 text-slate-400 hover:text-slate-700"
+                                        className="cursor-pointer rounded-lg p-1 text-slate-400 hover:text-slate-700"
                                     >
                                         <X size={16} />
                                     </button>
@@ -454,7 +458,8 @@ export default function UnitIndex({ units }) {
                                         <input
                                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-sky-600"
                                             value={data.nama_unit}
-                                            onChange={(e) => setData('nama_unit', e.target.value)}
+                                            maxLength={4}
+                                            onChange={(e) => setData('nama_unit', normalizeUnitCode(e.target.value, 4))}
                                         />
                                         {errors.nama_unit && <p className="mt-1 text-xs text-red-600">{errors.nama_unit}</p>}
                                     </div>
@@ -466,7 +471,8 @@ export default function UnitIndex({ units }) {
                                         <input
                                             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-sky-600"
                                             value={data.zona}
-                                            onChange={(e) => setData('zona', e.target.value)}
+                                            maxLength={2}
+                                            onChange={(e) => setData('zona', normalizeUnitCode(e.target.value, 2))}
                                         />
                                         {errors.zona && <p className="mt-1 text-xs text-red-600">{errors.zona}</p>}
                                     </div>
@@ -525,14 +531,14 @@ export default function UnitIndex({ units }) {
                                         <button
                                             type="submit"
                                             disabled={processing}
-                                            className="flex-1 rounded-xl bg-sky-600 py-3 text-sm font-bold text-white hover:bg-sky-600/90 disabled:opacity-50"
+                                            className="cursor-pointer flex-1 rounded-xl bg-sky-600 py-3 text-sm font-bold text-white hover:bg-sky-600/90 disabled:opacity-50"
                                         >
                                             {editingUnit ? 'Simpan Perubahan' : 'Tambah Unit'}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setDrawerOpen(false)}
-                                            className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
+                                            className="cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-sm"
                                         >
                                             Batal
                                         </button>
@@ -560,13 +566,13 @@ export default function UnitIndex({ units }) {
                                 <div className="flex justify-end gap-2">
                                     <button
                                         onClick={() => setDeletingUnit(null)}
-                                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+                                        className="cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-sm"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         onClick={confirmDelete}
-                                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-600/90"
+                                        className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-600/90"
                                     >
                                         Ya, Hapus
                                     </button>
@@ -596,14 +602,14 @@ export default function UnitIndex({ units }) {
                                     <button
                                         onClick={() => setBulkDeleteOpen(false)}
                                         disabled={bulkDeleting}
-                                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm disabled:opacity-50"
+                                        className="cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-sm disabled:opacity-50"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         onClick={confirmBulkDelete}
                                         disabled={bulkDeleting}
-                                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-600/90 disabled:opacity-50"
+                                        className="cursor-pointer rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-600/90 disabled:opacity-50"
                                     >
                                         {bulkDeleting ? 'Menghapus...' : `Ya, Hapus ${selectedIds.length} Unit`}
                                     </button>
