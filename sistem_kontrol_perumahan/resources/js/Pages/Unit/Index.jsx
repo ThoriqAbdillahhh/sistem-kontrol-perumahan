@@ -42,6 +42,17 @@ function normalizeUnitCode(value, maxLength) {
     return value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, maxLength);
 }
 
+function formatDateString(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+}
+
 export default function UnitIndex({ units }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [editingUnit, setEditingUnit] = useState(null);
@@ -362,7 +373,7 @@ export default function UnitIndex({ units }) {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                                                {unit.tanggal_mulai ?? '-'}
+                                                {formatDateString(unit.tanggal_mulai)}
                                             </td>
                                             <td className="max-w-[160px] truncate px-4 py-3 text-xs text-slate-500" title={unit.keterangan}>
                                                 {unit.keterangan || '—'}

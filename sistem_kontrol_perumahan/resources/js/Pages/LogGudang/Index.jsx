@@ -382,6 +382,17 @@ export default function LogGudangIndex({
                                                 </td>
                                                 <td className="px-4 py-3 font-semibold text-xs">
                                                     {r.material?.nama_material}
+                                                    {r.deleted_at ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-red-600">
+                                                            Dihapus oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : r.row_status === "edited" ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-amber-700">
+                                                            Diedit oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
                                                     {Number(
@@ -527,6 +538,17 @@ export default function LogGudangIndex({
                                                 </td>
                                                 <td className="px-4 py-3 font-semibold text-xs">
                                                     {r.material?.nama_material}
+                                                    {r.deleted_at ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-red-600">
+                                                            Dihapus oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : r.row_status === "edited" ? (
+                                                        <div className="mt-1 text-[11px] font-semibold text-amber-700">
+                                                            Diedit oleh {r.row_status_by ?? "Admin"}
+                                                            {r.row_status_at && ` pada ${r.row_status_at}`}
+                                                        </div>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-4 py-3 font-mono text-xs font-bold">
                                                     {Number(

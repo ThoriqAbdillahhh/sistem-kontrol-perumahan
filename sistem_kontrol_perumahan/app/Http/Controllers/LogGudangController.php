@@ -22,10 +22,64 @@ class LogGudangController extends Controller
     {
         $stokService = new StokGudangService();
         $movingAvg = $stokService->hitungMovingAverage();
+        $isSuperAdmin = Auth::user()?->hasRole('Super Admin') ?? false;
+
+        $logMasukQuery = LogMasukGudang::with('material');
+        $logKeluarQuery = LogKeluarHarian::with(['material', 'unit']);
+
+        if ($isSuperAdmin) {
+            $logMasukQuery = $logMasukQuery
+                ->withTrashed()
+                ->with('latestHistory.user');
+
+            $logKeluarQuery = $logKeluarQuery
+                ->withTrashed()
+                ->with('latestHistory.user');
+        }
+
+        $logMasuk = $logMasukQuery->orderByDesc('tanggal')->get()->map(function ($log) use ($isSuperAdmin) {
+            $row = $log->toArray();
+
+            if ($isSuperAdmin) {
+                $latestHistory = $log->histories->first();
+                $row['row_status'] = $log->deleted_at
+                    ? 'deleted'
+                    : ($latestHistory && $latestHistory->action === 'update' ? 'edited' : null);
+                $row['row_status_label'] = $row['row_status'] === 'deleted'
+                    ? 'Dihapus'
+                    : ($row['row_status'] === 'edited' ? 'Diedit' : null);
+                $row['row_status_by'] = optional($latestHistory->user)->name;
+                $row['row_status_at'] = optional($latestHistory->created_at)
+                    ? optional($latestHistory->created_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                    : null;
+            }
+
+            return $row;
+        });
+
+        $logKeluar = $logKeluarQuery->orderByDesc('tanggal')->get()->map(function ($log) use ($isSuperAdmin) {
+            $row = $log->toArray();
+
+            if ($isSuperAdmin) {
+                $latestHistory = $log->histories->first();
+                $row['row_status'] = $log->deleted_at
+                    ? 'deleted'
+                    : ($latestHistory && $latestHistory->action === 'update' ? 'edited' : null);
+                $row['row_status_label'] = $row['row_status'] === 'deleted'
+                    ? 'Dihapus'
+                    : ($row['row_status'] === 'edited' ? 'Diedit' : null);
+                $row['row_status_by'] = optional($latestHistory->user)->name;
+                $row['row_status_at'] = optional($latestHistory->created_at)
+                    ? optional($latestHistory->created_at)->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                    : null;
+            }
+
+            return $row;
+        });
 
         return Inertia::render('LogGudang/Index', [
-            'logMasuk'  => LogMasukGudang::with('material')->orderByDesc('tanggal')->get(),
-            'logKeluar' => LogKeluarHarian::with(['material', 'unit'])->orderByDesc('tanggal')->get(),
+            'logMasuk'  => $logMasuk,
+            'logKeluar' => $logKeluar,
             'materials' => Material::orderBy('nama_material')
                             ->get(['id', 'kode_material as kode', 'nama_material as nama', 'satuan'])
                             ->map(function ($m) use ($movingAvg) {

@@ -50,13 +50,13 @@
     "semantic_hash": ""
   },
   "app/Http/Controllers/DashboardController.php": {
-    "mtime": 1784092663.717268,
-    "ast_hash": "98c1654493a722d499848493fa488ef7",
+    "mtime": 1784263529.647394,
+    "ast_hash": "80beaca916446cb5d56bb895ac7d51db",
     "semantic_hash": ""
   },
   "app/Http/Controllers/LogGudangController.php": {
-    "mtime": 1784092629.5710466,
-    "ast_hash": "9afa3e3c2cede9032c0cb42a37d9baf6",
+    "mtime": 1784188184.1110582,
+    "ast_hash": "34a632e00bd59b1b79c5d92599affef5",
     "semantic_hash": ""
   },
   "app/Http/Controllers/MaterialController.php": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "app/Http/Controllers/ProgressController.php": {
-    "mtime": 1784099446.8122323,
-    "ast_hash": "5510c667daf68328bd9ab201a6b775f4",
+    "mtime": 1784188184.1110582,
+    "ast_hash": "70a8f22d429fddcd5535bc737c650ce1",
     "semantic_hash": ""
   },
   "app/Http/Controllers/StandarProgressController.php": {
@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "app/Http/Controllers/UnitController.php": {
-    "mtime": 1783928904.3333268,
-    "ast_hash": "f8e3b71dbb8ebade0f080d45faea1029",
+    "mtime": 1784188184.1110582,
+    "ast_hash": "c7350883f502629662893b6dc42e0501",
     "semantic_hash": ""
   },
   "app/Http/Controllers/UserRoleController.php": {
@@ -105,8 +105,8 @@
     "semantic_hash": ""
   },
   "app/Http/Requests/StoreLogKeluarRequest.php": {
-    "mtime": 1784005654.8534825,
-    "ast_hash": "bf06464855206079696ef24ba51bea2e",
+    "mtime": 1784188184.1110582,
+    "ast_hash": "6a9bfd09e16f02167bc4b538be406efb",
     "semantic_hash": ""
   },
   "app/Http/Requests/StoreLogMasukRequest.php": {
@@ -135,8 +135,8 @@
     "semantic_hash": ""
   },
   "app/Http/Requests/StoreUnitRequest.php": {
-    "mtime": 1783928904.3343618,
-    "ast_hash": "a6f2e8b7c811ccf40822953795dd228b",
+    "mtime": 1784263529.647967,
+    "ast_hash": "5efe00936317451503e88e12f99d0620",
     "semantic_hash": ""
   },
   "app/Http/Requests/UpdateMaterialRequest.php": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "app/Models/Unit.php": {
-    "mtime": 1784099446.814327,
-    "ast_hash": "7644c264762f3a43f56f9d41ea34bc5a",
+    "mtime": 1784263529.6490135,
+    "ast_hash": "56fc4ada02b6f354c69ec17c819b4cd6",
     "semantic_hash": ""
   },
   "app/Models/User.php": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "app/Services/StokGudangService.php": {
-    "mtime": 1784019053.9188204,
-    "ast_hash": "8bbd6c480e558a0abc90b31c413fe26a",
+    "mtime": 1784188184.1110582,
+    "ast_hash": "ad14b389bf322489d0892d3690b1ba00",
     "semantic_hash": ""
   },
   "artisan": {
@@ -370,8 +370,8 @@
     "semantic_hash": ""
   },
   "database/seeders/DatabaseSeeder.php": {
-    "mtime": 1784016572.89409,
-    "ast_hash": "c334580e43e28a0485aa5abe2f65cf39",
+    "mtime": 1784263529.65115,
+    "ast_hash": "6d03769a6745c2717848afcb46655b09",
     "semantic_hash": ""
   },
   "database/seeders/MaterialSeeder.php": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "database/seeders/UnitSeeder.php": {
-    "mtime": 1783936379.2923677,
-    "ast_hash": "59abcc431f2ec6bc2a72c9beea9941a3",
+    "mtime": 1784263529.6537893,
+    "ast_hash": "c0f2592cc891ebf4186459219a1fdf60",
     "semantic_hash": ""
   },
   "database/seeders/UserSeeder.php": {
@@ -520,8 +520,8 @@
     "semantic_hash": ""
   },
   "resources/js/Components/TableCard.jsx": {
-    "mtime": 1783923439.7630816,
-    "ast_hash": "77e27d30cc573b35756837ef7c6bf59c",
+    "mtime": 1784263529.6548038,
+    "ast_hash": "af26a7cd4ba1d27a469cc54b3055a31e",
     "semantic_hash": ""
   },
   "resources/js/Components/TextInput.jsx": {
@@ -575,13 +575,13 @@
     "semantic_hash": ""
   },
   "resources/js/Pages/Dashboard/Index.jsx": {
-    "mtime": 1784092663.7189586,
-    "ast_hash": "b34a857c151aeb7c2f8316c0703e7ef7",
+    "mtime": 1784263529.6548038,
+    "ast_hash": "0d2c875ccb7b0934fd1671490056140f",
     "semantic_hash": ""
   },
   "resources/js/Pages/LogGudang/Index.jsx": {
-    "mtime": 1784099446.818597,
-    "ast_hash": "b5367c8a97188f4b997dccc7a84f04ae",
+    "mtime": 1784263529.6548038,
+    "ast_hash": "6c3e5c28156fca866aff2c11311dce17",
     "semantic_hash": ""
   },
   "resources/js/Pages/Material/Index.jsx": {
@@ -615,8 +615,8 @@
     "semantic_hash": ""
   },
   "resources/js/Pages/Progress/Index.jsx": {
-    "mtime": 1784099446.8193157,
-    "ast_hash": "afc0adffdc7758283451b5c6ba74a07a",
+    "mtime": 1784188184.1271124,
+    "ast_hash": "7b10394d4997b8ac1518e1ca6b9f0e4c",
     "semantic_hash": ""
   },
   "resources/js/Pages/StandarProgress/StandarProgressIndex.jsx": {
@@ -625,8 +625,8 @@
     "semantic_hash": ""
   },
   "resources/js/Pages/Unit/Index.jsx": {
-    "mtime": 1784087465.7807772,
-    "ast_hash": "3a626e2f12478a2b505cba86e9cab43d",
+    "mtime": 1784263529.6548038,
+    "ast_hash": "021bb3f181c4745cf22aeb1746c46d5e",
     "semantic_hash": ""
   },
   "resources/js/Pages/UserRole/Index.jsx": {
@@ -675,8 +675,8 @@
     "semantic_hash": ""
   },
   "routes/web.php": {
-    "mtime": 1784099446.8213215,
-    "ast_hash": "cde82dccf481e8b59d1ddbc9416da711",
+    "mtime": 1784188184.1286035,
+    "ast_hash": "195f8210082d7d098c44772dface7433",
     "semantic_hash": ""
   },
   "tailwind.config.js": {
@@ -747,6 +747,46 @@
   "public/robots.txt": {
     "mtime": 1783428160.512171,
     "ast_hash": "b6216d61c03e6ce0c9aea6ca7808f7ca",
+    "semantic_hash": ""
+  },
+  "app/Http/Requests/UpdateLogKeluarRequest.php": {
+    "mtime": 1784188184.1110582,
+    "ast_hash": "f8dbb2660eb8d6f75fa1ca573f51ffd2",
+    "semantic_hash": ""
+  },
+  "check_stock.php": {
+    "mtime": 1784263529.6495898,
+    "ast_hash": "2bb9cc87f4b9026cf8c9fbf03e06a75a",
+    "semantic_hash": ""
+  },
+  "database/seeders/BalancedLogGudangSeeder.php": {
+    "mtime": 1784263529.6501884,
+    "ast_hash": "9ed20b3eb6e2c5639896cbb24df8c2ff",
+    "semantic_hash": ""
+  },
+  "database/seeders/LogGudangSeeder.php": {
+    "mtime": 1784263529.6516688,
+    "ast_hash": "0fd9f3039b4b4b4ec1fe9d83a8da0bd8",
+    "semantic_hash": ""
+  },
+  "database/seeders/MatrixProgressSeeder.php": {
+    "mtime": 1784263529.6524692,
+    "ast_hash": "2a88fd54bd3c2cf367c1422f79cb6ddf",
+    "semantic_hash": ""
+  },
+  "database/seeders/ProgressUnitSeeder.php": {
+    "mtime": 1784263529.6524692,
+    "ast_hash": "9398938bb3c64995a5a225a55c90efd1",
+    "semantic_hash": ""
+  },
+  "tests/Feature/BalancedLogGudangSeederTest.php": {
+    "mtime": 1784263529.6548038,
+    "ast_hash": "fc5ae9021006e03ece375b75e56a0c56",
+    "semantic_hash": ""
+  },
+  "tests/Unit/UnitModelTest.php": {
+    "mtime": 1784263529.6548038,
+    "ast_hash": "677da9c31eb1751225553a965e0c5264",
     "semantic_hash": ""
   }
 }
