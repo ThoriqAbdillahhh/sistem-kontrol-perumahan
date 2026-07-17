@@ -44,10 +44,11 @@ class MaterialConsumptionService
                 $statusUnit = 'Warning';
             }
 
-            $detail[] = [
+           $detail[] = [
                 'material'    => $std->material->nama_material,
                 'qty_aktual'  => $qtyAktual,
                 'qty_standar' => $qtyStandar,
+                'sisa'        => $qtyAktual - $qtyStandar,
                 'status'      => $status,
             ];
         }

@@ -30,6 +30,7 @@ class ProgressController extends Controller
                 'nama_material' => $d['material'],
                 'standar'       => $d['qty_standar'],
                 'aktual'        => $d['qty_aktual'],
+                'sisa'          => $d['sisa'] ?? ($d['qty_aktual'] - $d['qty_standar']),
                 'analisa'       => strtoupper($d['status']),
             ])->all();
 
