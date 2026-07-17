@@ -2,6 +2,7 @@ import GuestLayout from "@/Layouts/GuestLayout";
 import { Head, useForm } from "@inertiajs/react";
 import { Building2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import logo from "@/assets/tabarok.jpg";
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
@@ -27,9 +28,9 @@ export default function Login() {
 
                 {/* Logo */}
                 <div className="mb-8 text-center">
-                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-cyan-700 shadow-lg">
-                        <Building2 size={40} color="white" />
-                    </div>
+                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl shadow-lg overflow-hidden">
+    <img src={logo} alt="Microdata" className="h-full w-full object-contain p-2" />
+</div>
 
                     <h1 className="text-4xl font-bold text-white">
                         EstateControl ERP

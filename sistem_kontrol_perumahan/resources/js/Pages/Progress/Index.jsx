@@ -120,21 +120,21 @@ export default function ProgressIndex({ units, monitoring }) {
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => openUpdate(unit)}
-                                                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-sky-600 hover:border-sky-600"
+                                                        className="cursor-pointer rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-sky-600 hover:border-sky-600"
                                                     >
                                                         Update Progress
                                                     </button>
                                                     {monitoring[unit.id] && (
                                                         <button
                                                             onClick={() => setExpandedUnitId(expandedUnitId === unit.id ? null : unit.id)}
-                                                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
+                                                            className="cursor-pointer rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
                                                         >
                                                             {expandedUnitId === unit.id ? 'Tutup Detail' : 'Lihat Detail'}
                                                         </button>
                                                     )}
                                                     <button
                                                         onClick={() => setHistoryUnit(unit)}
-                                                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
+                                                        className="cursor-pointer rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
                                                     >
                                                         Riwayat
                                                     </button>
@@ -246,14 +246,14 @@ export default function ProgressIndex({ units, monitoring }) {
                                         <button
                                             type="submit"
                                             disabled={processing}
-                                            className="flex-1 rounded-xl bg-sky-600 py-3 text-sm font-bold text-white hover:bg-sky-600/90 disabled:opacity-50"
+                                            className="cursor-pointer flex-1 rounded-xl bg-sky-600 py-3 text-sm font-bold text-white hover:bg-sky-600/90 disabled:opacity-50"
                                         >
                                             Simpan Progress
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setSelectedUnit(null)}
-                                            className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
+                                            className="cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-sm"
                                         >
                                             Batal
                                         </button>
@@ -314,7 +314,7 @@ export default function ProgressIndex({ units, monitoring }) {
                                 <button
                                     type="button"
                                     onClick={() => setHistoryUnit(null)}
-                                    className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-semibold"
+                                    className="cursor-pointer mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-semibold"
                                 >
                                     Tutup
                                 </button>
