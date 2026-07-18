@@ -21,7 +21,7 @@ class DashboardController extends Controller
             ->whereYear('tanggal', $bulanIni->year)
             ->sum('total');
 
-        $units = Unit::with('latestProgress')->get();
+        $units = Unit::with(['latestProgress',])->get();
 
         // ── Bangun cumulative standar qty per material, per batas_atas ──
         $matrixSorted = MatrixProgress::with('details')->orderBy('batas_atas')->get();
@@ -87,15 +87,30 @@ class DashboardController extends Controller
             return 'Aman';
         };
 
+        $monitoring = $units->mapWithKeys(function (Unit $unit) {
+
+            $detail = $unit->latestProgress?->detail_material ?? [];
+
+            $rows = collect($detail)->map(fn ($d) => [
+                'nama_material' => $d['material'],
+                'standar'       => $d['qty_standar'],
+                'aktual'        => $d['qty_aktual'],
+                'analisa'       => strtoupper($d['status']),
+            ])->all();
+
+            return [$unit->id => $rows];
+        });
+
         $rows = $units->map(function ($u) use ($computeStatusMaterial) {
             $progress = (int) ($u->latestProgress?->progress_percent ?? 0);
 
             return [
-                'id'             => $u->nama_unit,
-                'zona'           => $u->zona,
-                'tukang'         => $u->tukang,
-                'progress'       => $progress,
-                'status'         => $u->status,
+                'id' => $u->id,
+                'nama_unit' => $u->nama_unit,
+                'zona' => $u->zona,
+                'tukang' => $u->tukang,
+                'progress' => $progress,
+                'status' => $u->status,
                 'statusMaterial' => $computeStatusMaterial($u),
             ];
         });
@@ -118,6 +133,7 @@ class DashboardController extends Controller
                 'pengeluaranBulanIni' => (float) $pengeluaranBulanIni,
             ],
             'rows'       => $rows,
+            'monitoring' => $monitoring,
             'stokGudang' => $this->stokService->ringkasanDashboard(),
         ]);
     }

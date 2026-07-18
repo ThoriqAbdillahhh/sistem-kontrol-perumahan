@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 
@@ -13,14 +13,21 @@ import {
 } from "lucide-react";
 
 function StatusBadge({ value }) {
+    const status = String(value).toLowerCase();
+
     const map = {
-        Aman: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-        Selesai: "bg-sky-50 text-sky-700 ring-sky-200",
-        Warning: "bg-amber-50 text-amber-700 ring-amber-200",
-        Boros: "bg-red-50 text-red-700 ring-red-200",
+        aman: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+        selesai: "bg-sky-50 text-sky-700 ring-sky-200",
+        warning: "bg-amber-50 text-amber-700 ring-amber-200",
+        boros: "bg-red-50 text-red-700 ring-red-200",
     };
+
     return (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${map[value] ?? ""}`}>
+        <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${
+                map[status] ?? "bg-slate-100 text-slate-600 ring-slate-200"
+            }`}
+        >
             {value}
         </span>
     );
@@ -46,7 +53,7 @@ function progressBarColor(statusMaterial) {
     return "bg-emerald-500";
 }
 
-export default function Dashboard({ kpi, rows, stokGudang }) {
+export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
     const [stokQuery, setStokQuery] = useState("");
     const [stokVisible, setStokVisible] = useState(STOK_LIMIT);
 
@@ -54,17 +61,19 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
     const [statusFilter, setStatusFilter] = useState("Semua Status");
 
     const filteredStok = stokGudang.filter((s) =>
-        s.nama.toLowerCase().includes(stokQuery.toLowerCase())
+        s.nama.toLowerCase().includes(stokQuery.toLowerCase()),
     );
     const visibleStok = filteredStok.slice(0, stokVisible);
     const hasMore = filteredStok.length > stokVisible;
+
+    const [expandedUnitId, setExpandedUnitId] = useState(null);
 
     // Filter tabel "Progres Unit" berdasarkan search + status
     const filteredRows = rows.filter((row) => {
         const q = unitQuery.toLowerCase();
         const matchesQuery =
             !q ||
-            row.id?.toLowerCase().includes(q) ||
+            row.nama_unit?.toLowerCase().includes(q) ||
             row.zona?.toLowerCase().includes(q) ||
             row.tukang?.toLowerCase().includes(q);
 
@@ -238,61 +247,159 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                                 <tbody>
                                     {filteredRows.map((row) => {
                                         const progress = clampProgress(
-                                            row.progress
+                                            row.progress,
                                         );
+
                                         return (
-                                            <tr
-                                                key={row.id}
-                                                className="border-t border-border hover:bg-secondary/50"
-                                            >
-                                                <td className="px-4 py-3 font-bold font-mono text-primary">
-                                                    {row.id}
-                                                </td>
-                                                <td className="px-4 py-3 text-xs">
-                                                    {row.zona}
-                                                </td>
-                                                <td className="px-4 py-3 text-xs">
-                                                    {row.tukang}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-1.5 w-20 rounded-full bg-secondary overflow-hidden">
-                                                            {progress > 0 && (
-                                                                <div
-                                                                    className={`h-1.5 rounded-full ${progressBarColor(
-                                                                        row.statusMaterial
-                                                                    )}`}
-                                                                    style={{
-                                                                        width: `${progress}%`,
-                                                                    }}
-                                                                />
-                                                            )}
+                                            <React.Fragment key={row.id}>
+                                                <tr className="border-t border-border hover:bg-secondary/50">
+                                                    <td className="px-4 py-3 font-bold font-mono text-primary">
+                                                        {row.nama_unit}
+                                                    </td>
+
+                                                    <td className="px-4 py-3 text-xs">
+                                                        {row.zona}
+                                                    </td>
+
+                                                    <td className="px-4 py-3 text-xs">
+                                                        {row.tukang}
+                                                    </td>
+
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-1.5 w-20 rounded-full bg-secondary overflow-hidden">
+                                                                {progress >
+                                                                    0 && (
+                                                                    <div
+                                                                        className={`h-1.5 rounded-full ${progressBarColor(
+                                                                            row.statusMaterial,
+                                                                        )}`}
+                                                                        style={{
+                                                                            width: `${progress}%`,
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                            </div>
+
+                                                            <span className="font-mono text-xs">
+                                                                {progress}%
+                                                            </span>
                                                         </div>
-                                                        <span className="font-mono text-xs">
-                                                            {progress}%
+                                                    </td>
+
+                                                    <td className="px-4 py-3">
+                                                        <span
+                                                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
+                                                                row.status ===
+                                                                "Aktif"
+                                                                    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                                    : "bg-slate-100 text-slate-500 ring-slate-200"
+                                                            }`}
+                                                        >
+                                                            {row.status}
                                                         </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <span
-                                                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
-                                                            row.status ===
-                                                            "Aktif"
-                                                                ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                                                                : "bg-slate-100 text-slate-500 ring-slate-200"
-                                                        }`}
-                                                    >
-                                                        {row.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <StatusBadge
-                                                        value={
-                                                            row.statusMaterial
-                                                        }
-                                                    />
-                                                </td>
-                                            </tr>
+                                                    </td>
+
+                                                    <td className="px-4 py-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setExpandedUnitId(
+                                                                    expandedUnitId ===
+                                                                        row.id
+                                                                        ? null
+                                                                        : row.id,
+                                                                )
+                                                            }
+                                                            className="cursor-pointer"
+                                                        >
+                                                            <StatusBadge
+                                                                value={
+                                                                    row.statusMaterial
+                                                                }
+                                                            />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+
+                                                {expandedUnitId === row.id && (
+                                                    <tr>
+                                                        <td
+                                                            colSpan={6}
+                                                            className="bg-slate-50 px-4 py-4"
+                                                        >
+                                                            <table className="w-full text-xs">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th className="pb-2 text-left font-semibold">
+                                                                            Material
+                                                                        </th>
+
+                                                                        <th className="pb-2 text-left font-semibold">
+                                                                            Standar
+                                                                        </th>
+
+                                                                        <th className="pb-2 text-left font-semibold">
+                                                                            Aktual
+                                                                        </th>
+
+                                                                        <th className="pb-2 text-left font-semibold">
+                                                                            Status
+                                                                        </th>
+                                                                    </tr>
+                                                                </thead>
+
+                                                                <tbody>
+                                                                    {(
+                                                                        monitoring[
+                                                                            row
+                                                                                .id
+                                                                        ] ?? []
+                                                                    ).map(
+                                                                        (
+                                                                            item,
+                                                                            i,
+                                                                        ) => (
+                                                                            <tr
+                                                                                key={
+                                                                                    i
+                                                                                }
+                                                                                className="border-t border-slate-200"
+                                                                            >
+                                                                                <td className="py-2">
+                                                                                    {
+                                                                                        item.nama_material
+                                                                                    }
+                                                                                </td>
+
+                                                                                <td className="py-2">
+                                                                                    {
+                                                                                        item.standar
+                                                                                    }
+                                                                                </td>
+
+                                                                                <td className="py-2">
+                                                                                    {
+                                                                                        item.aktual
+                                                                                    }
+                                                                                </td>
+
+                                                                                <td className="py-2">
+                                                                                    <StatusBadge
+                                                                                        value={
+                                                                                            item.analisa
+                                                                                        }
+                                                                                    />
+                                                                                </td>
+                                                                            </tr>
+                                                                        ),
+                                                                    )}
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </React.Fragment>
                                         );
                                     })}
                                     {filteredRows.length === 0 && (
@@ -302,8 +409,7 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                                                 className="px-4 py-8 text-center text-sm text-muted-foreground"
                                             >
                                                 {unitQuery ||
-                                                statusFilter !==
-                                                    "Semua Status"
+                                                statusFilter !== "Semua Status"
                                                     ? "Tidak ada unit yang cocok dengan filter."
                                                     : "Belum ada data unit."}
                                             </td>
@@ -375,7 +481,8 @@ export default function Dashboard({ kpi, rows, stokGudang }) {
                                     }
                                     className="flex-1 rounded-xl border border-border py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
                                 >
-                                    Tampilkan lainnya ({filteredStok.length - stokVisible} item)
+                                    Tampilkan lainnya (
+                                    {filteredStok.length - stokVisible} item)
                                 </button>
                             )}
 

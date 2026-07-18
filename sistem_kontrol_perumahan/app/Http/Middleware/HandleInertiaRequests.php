@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -44,6 +45,22 @@ class HandleInertiaRequests extends Middleware
                         ]
                         : null,
                 ],
+
+                'notifications' => function () use ($request) {
+                    if (!$request->user()) {
+                        return ['items' => [], 'unreadCount' => 0];
+                    }
+
+                    $logs = ActivityLog::with('user:id,name')
+                        ->latest()
+                        ->limit(15)
+                        ->get();
+
+                    return [
+                        'items'       => $logs,
+                        'unreadCount' => ActivityLog::whereNull('read_at')->count(),
+                    ];
+                },
             ];
         }
 }
