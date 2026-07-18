@@ -51,6 +51,7 @@ export default function ProgressIndex({ units, monitoring }) {
     const [historyUnit, setHistoryUnit] = useState(null);
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedStatusFilter, setSelectedStatusFilter] = useState(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         unit_id: '',
@@ -75,13 +76,22 @@ export default function ProgressIndex({ units, monitoring }) {
             onSuccess: () => setSelectedUnit(null),
         });
     }
-    const totalPages = pageSize === 'all' ? 1 : Math.ceil(units.length / pageSize);
+
+    // Filter units berdasarkan status material
+    const filteredUnits = selectedStatusFilter
+        ? units.filter((unit) => {
+            const overallStatus = getOverallStatus(unit.id, monitoring);
+            return overallStatus === selectedStatusFilter;
+        })
+        : units;
+
+    const totalPages = pageSize === 'all' ? 1 : Math.ceil(filteredUnits.length / pageSize);
     const paginatedUnits =
-        pageSize === 'all' ? units : units.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+        pageSize === 'all' ? filteredUnits : filteredUnits.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [pageSize]);
+    }, [pageSize, selectedStatusFilter]);
 
     return (
         <AuthenticatedLayout>
@@ -98,7 +108,53 @@ export default function ProgressIndex({ units, monitoring }) {
 
                     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-                            <h2 className="text-sm font-bold text-slate-900">Daftar Unit ({units.length})</h2>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Daftar Unit ({filteredUnits.length}/{units.length})
+                                </h2>
+                                <div className="flex gap-1.5">
+                                    <button
+                                        onClick={() => setSelectedStatusFilter(null)}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === null
+                                                ? 'bg-slate-900 text-white'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        }`}
+                                    >
+                                        Semua
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedStatusFilter('AMAN')}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === 'AMAN'
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100'
+                                        }`}
+                                    >
+                                        Aman
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedStatusFilter('WARNING')}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === 'WARNING'
+                                                ? 'bg-amber-600 text-white'
+                                                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100'
+                                        }`}
+                                    >
+                                        Warning
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedStatusFilter('BOROS')}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === 'BOROS'
+                                                ? 'bg-red-600 text-white'
+                                                : 'bg-red-50 text-red-700 ring-1 ring-red-200 hover:bg-red-100'
+                                        }`}
+                                    >
+                                        Boros
+                                    </button>
+                                </div>
+                            </div>
                             <select
                                 value={pageSize}
                                 onChange={(e) => setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value))}
