@@ -1,6 +1,7 @@
 <?php
-require 'vendor/autoload.php';
-$app = require 'bootstrap/app.php';
+$basePath = dirname(__DIR__, 3);
+require $basePath . '/vendor/autoload.php';
+$app = require $basePath . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
