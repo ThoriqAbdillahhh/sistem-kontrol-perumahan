@@ -172,7 +172,7 @@ export default function UnitIndex({ units }) {
     });
 
     function openAdd() {
-        setEditingUnit(null);
+        setEditingUnit(null); 
         setData({
             nama_unit: '',
             zona: '',

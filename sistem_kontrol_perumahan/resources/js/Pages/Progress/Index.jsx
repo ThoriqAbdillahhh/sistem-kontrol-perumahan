@@ -22,11 +22,10 @@ function UnitStatusBadge({ status }) {
     const isAktif = status === 'Aktif';
     return (
         <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
-                isAktif
-                    ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                    : 'bg-slate-100 text-slate-500 ring-slate-200'
-            }`}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${isAktif
+                ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                : 'bg-slate-100 text-slate-500 ring-slate-200'
+                }`}
         >
             {status ?? 'Non-Aktif'}
         </span>
@@ -150,6 +149,7 @@ export default function ProgressIndex({ units, monitoring }) {
                                                                 <th className="pb-2 text-left font-semibold">Material</th>
                                                                 <th className="pb-2 text-left font-semibold">Standar</th>
                                                                 <th className="pb-2 text-left font-semibold">Aktual</th>
+                                                                <th className="pb-2 text-left font-semibold">Sisa</th>
                                                                 <th className="pb-2 text-left font-semibold">Status</th>
                                                             </tr>
                                                         </thead>
@@ -159,6 +159,9 @@ export default function ProgressIndex({ units, monitoring }) {
                                                                     <td className="py-2 font-semibold text-slate-700">{row.nama_material}</td>
                                                                     <td className="py-2 text-slate-500">{row.standar}</td>
                                                                     <td className="py-2 text-slate-500">{row.aktual}</td>
+                                                                    <td className="py-2 text-slate-500">
+                                                                        {Math.max(row.sisa, 0)}
+                                                                    </td>
                                                                     <td className="py-2">
                                                                         <StatusBadge status={row.analisa} />
                                                                     </td>
