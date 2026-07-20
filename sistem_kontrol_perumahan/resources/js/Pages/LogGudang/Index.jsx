@@ -624,7 +624,7 @@ export default function LogGudangIndex({
                     <div className="space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
                             <p className="font-bold">Stok Real-time</p>
-                            <div className="relative flex items-center gap-2">
+                            <div className="relative">
                                 <Search
                                     size={13}
                                     className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -639,24 +639,40 @@ export default function LogGudangIndex({
                                     }}
                                     className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                                 />
-                                <select
-                                    value={stokSortBy}
-                                    onChange={(e) => setStokSortBy(e.target.value)}
-                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
-                                >
-                                    <option value="">Urutkan</option>
-                                    <option value="harga">Harga (besar → kecil)</option>
-                                    <option value="stok">Stok (banyak → sedikit)</option>
-                                </select>
-                                <select
-                                    value={stokSortDir}
-                                    onChange={(e) => setStokSortDir(e.target.value)}
-                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
-                                >
-                                    <option value="desc">Desc</option>
-                                    <option value="asc">Asc</option>
-                                </select>
                             </div>
+                        </div>
+
+                        <div className="mt-2 flex items-center gap-2">
+                            <select
+                                value={stokSortBy}
+                                onChange={(e) => setStokSortBy(e.target.value)}
+                                className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
+                            >
+                                <option value="">Urutkan</option>
+                                <option value="harga">Harga</option>
+                                <option value="stok">Stok</option>
+                            </select>
+                            <select
+                                value={stokSortDir}
+                                onChange={(e) => setStokSortDir(e.target.value)}
+                                className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
+                            >
+                                <option value="desc">Desc</option>
+                                <option value="asc">Asc</option>
+                            </select>
+
+                            <span className="text-xs text-muted-foreground ml-2">
+                                {stokSortBy === 'harga' && (
+                                    stokSortDir === 'desc'
+                                        ? '(besar → kecil)'
+                                        : '(kecil → besar)'
+                                )}
+                                {stokSortBy === 'stok' && (
+                                    stokSortDir === 'desc'
+                                        ? '(banyak → sedikit)'
+                                        : '(sedikit → banyak)'
+                                )}
+                            </span>
                         </div>
 
                         {stok
@@ -665,7 +681,8 @@ export default function LogGudangIndex({
                                 if (!stokSortBy) return 0;
                                 const dir = stokSortDir === 'asc' ? 1 : -1;
                                 if (stokSortBy === 'harga') {
-                                    return (Number(a.harga_satuan ?? 0) - Number(b.harga_satuan ?? 0)) * dir;
+                                    // Sort by total value `nilai_rupiah` to match the displayed currency
+                                    return (Number(a.nilai_rupiah ?? a.harga_satuan ?? 0) - Number(b.nilai_rupiah ?? b.harga_satuan ?? 0)) * dir;
                                 }
                                 if (stokSortBy === 'stok') {
                                     return (Number(a.sisa_stok ?? 0) - Number(b.sisa_stok ?? 0)) * dir;

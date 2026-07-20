@@ -88,7 +88,8 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
             if (!stokSortBy) return 0;
             const dir = stokSortDir === 'asc' ? 1 : -1;
             if (stokSortBy === 'harga') {
-                return (Number(a.harga_satuan ?? 0) - Number(b.harga_satuan ?? 0)) * dir;
+                // Sort by total rupiah value shown in UI (`nilai_rupiah`) so order matches displayed currency
+                return (Number(a.nilai_rupiah ?? a.harga_satuan ?? 0) - Number(b.nilai_rupiah ?? b.harga_satuan ?? 0)) * dir;
             }
             if (stokSortBy === 'stok') {
                 return (Number(a.sisa_stok ?? 0) - Number(b.sisa_stok ?? 0)) * dir;
@@ -457,7 +458,7 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
                         <div className="flex items-center justify-between gap-2">
                             <p className="font-bold">Stok Gudang</p>
 
-                            <div className="relative flex items-center gap-2">
+                            <div className="relative">
                                 <Search
                                     size={13}
                                     className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -472,6 +473,10 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
                                     }}
                                     className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                                 />
+                            </div>
+
+                            {/* Filters: place below the title and search as requested */}
+                            <div className="mt-2 flex items-center gap-2">
                                 <select
                                     value={stokSortBy}
                                     onChange={(e) => setStokSortBy(e.target.value)}
@@ -481,6 +486,7 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
                                     <option value="harga">Harga</option>
                                     <option value="stok">Stok</option>
                                 </select>
+
                                 <select
                                     value={stokSortDir}
                                     onChange={(e) => setStokSortDir(e.target.value)}
@@ -489,6 +495,20 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
                                     <option value="desc">Desc</option>
                                     <option value="asc">Asc</option>
                                 </select>
+
+                                {/* dynamic direction hint matching the dir select */}
+                                <span className="text-xs text-muted-foreground ml-2">
+                                    {stokSortBy === 'harga' && (
+                                        stokSortDir === 'desc'
+                                            ? '(besar → kecil)'
+                                            : '(kecil → besar)'
+                                    )}
+                                    {stokSortBy === 'stok' && (
+                                        stokSortDir === 'desc'
+                                            ? '(banyak → sedikit)'
+                                            : '(sedikit → banyak)'
+                                    )}
+                                </span>
                             </div>
                         </div>
 
