@@ -86,14 +86,14 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
     });
 
     const statusOptions = [
-        "Semua Status",
-        "Aktif",
-        "Non Aktif",
-        "Aman",
-        "Warning",
-        "Boros",
-        "Selesai",
-    ];
+    "Semua Status",
+    "Aktif",
+    "Non-aktif",
+    "Aman",
+    "Warning",
+    "Boros",
+    "Selesai",
+];
 
     const cards = [
         {
