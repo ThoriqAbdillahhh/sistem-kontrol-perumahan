@@ -134,7 +134,8 @@ class DashboardController extends Controller
             ],
             'rows'       => $rows,
             'monitoring' => $monitoring,
-            'stokGudang' => $this->stokService->ringkasanDashboard(),
+            // provide full stok data so the frontend can sort by harga or stok
+            'stokGudang' => $this->stokService->getStokGudang(),
         ]);
     }
 }

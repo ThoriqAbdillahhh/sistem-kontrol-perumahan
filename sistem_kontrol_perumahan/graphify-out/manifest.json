@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "app/Http/Controllers/LogGudangController.php": {
-    "mtime": 1784188184.1110582,
-    "ast_hash": "34a632e00bd59b1b79c5d92599affef5",
+    "mtime": 1784271182.7465506,
+    "ast_hash": "fce9387807d3a79acf2405e164777bbc",
     "semantic_hash": ""
   },
   "app/Http/Controllers/MaterialController.php": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "app/Http/Controllers/ProgressController.php": {
-    "mtime": 1784188184.1110582,
-    "ast_hash": "70a8f22d429fddcd5535bc737c650ce1",
+    "mtime": 1784283005.308978,
+    "ast_hash": "3a6a412f0aa3d8b264b4203680ffb8ee",
     "semantic_hash": ""
   },
   "app/Http/Controllers/StandarProgressController.php": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "app/Http/Middleware/HandleInertiaRequests.php": {
-    "mtime": 1783656219.7873397,
-    "ast_hash": "e797d59039b530d0166141192b548409",
+    "mtime": 1784283005.3094893,
+    "ast_hash": "639ce9d6fa8f021b2fe597c9ea1f20b3",
     "semantic_hash": ""
   },
   "app/Http/Requests/Auth/LoginRequest.php": {
@@ -150,13 +150,13 @@
     "semantic_hash": ""
   },
   "app/Models/LogKeluarHarian.php": {
-    "mtime": 1784092629.5721674,
-    "ast_hash": "f34f5b8564b2c71698467ebd139bb40c",
+    "mtime": 1784271182.7465506,
+    "ast_hash": "e210e9695f0a9f74105d37cff989625d",
     "semantic_hash": ""
   },
   "app/Models/LogMasukGudang.php": {
-    "mtime": 1784092629.572683,
-    "ast_hash": "2578b4ee8df71cc96944b2ba8d4964c8",
+    "mtime": 1784271182.7465506,
+    "ast_hash": "2779143d34e2559f7088666165dcac13",
     "semantic_hash": ""
   },
   "app/Models/Material.php": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "app/Services/MaterialConsumptionService.php": {
-    "mtime": 1783923439.754327,
-    "ast_hash": "431595697cbc677aa045255abe63c8ff",
+    "mtime": 1784283005.3110442,
+    "ast_hash": "0e1ab41cac1d72a037d2e27fce37720b",
     "semantic_hash": ""
   },
   "app/Services/StokGudangService.php": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "resources/js/Components/Sidebar.jsx": {
-    "mtime": 1784099446.8174758,
-    "ast_hash": "897a4a52f457d6a92d49112f943f2d26",
+    "mtime": 1784283005.313644,
+    "ast_hash": "38bc228875dc9200bca7f7ed2f48ea85",
     "semantic_hash": ""
   },
   "resources/js/Components/TableCard.jsx": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "resources/js/Layouts/AuthenticatedLayout.jsx": {
-    "mtime": 1784006371.005932,
-    "ast_hash": "9b2d7587e751e6c7cc345311f4753d12",
+    "mtime": 1784283005.3147023,
+    "ast_hash": "604368e8ede674c572136c52b467cd89",
     "semantic_hash": ""
   },
   "resources/js/Layouts/GuestLayout.jsx": {
@@ -555,8 +555,8 @@
     "semantic_hash": ""
   },
   "resources/js/Pages/Auth/Login.jsx": {
-    "mtime": 1784095244.3982208,
-    "ast_hash": "e283f1149c6885c51ea34ebecce69074",
+    "mtime": 1784283005.3152256,
+    "ast_hash": "b06bb6667fa86238460d548536cb3670",
     "semantic_hash": ""
   },
   "resources/js/Pages/Auth/Register.jsx": {
@@ -580,8 +580,8 @@
     "semantic_hash": ""
   },
   "resources/js/Pages/LogGudang/Index.jsx": {
-    "mtime": 1784263529.6548038,
-    "ast_hash": "6c3e5c28156fca866aff2c11311dce17",
+    "mtime": 1784271182.7822206,
+    "ast_hash": "80cef27897198dd39bf11ba85d5be627",
     "semantic_hash": ""
   },
   "resources/js/Pages/Material/Index.jsx": {
@@ -615,8 +615,8 @@
     "semantic_hash": ""
   },
   "resources/js/Pages/Progress/Index.jsx": {
-    "mtime": 1784188184.1271124,
-    "ast_hash": "7b10394d4997b8ac1518e1ca6b9f0e4c",
+    "mtime": 1784521390.3608727,
+    "ast_hash": "673b1e5b48484933f8b5688c5acdf1f7",
     "semantic_hash": ""
   },
   "resources/js/Pages/StandarProgress/StandarProgressIndex.jsx": {
@@ -625,8 +625,8 @@
     "semantic_hash": ""
   },
   "resources/js/Pages/Unit/Index.jsx": {
-    "mtime": 1784263529.6548038,
-    "ast_hash": "021bb3f181c4745cf22aeb1746c46d5e",
+    "mtime": 1784283005.3158624,
+    "ast_hash": "9f0ea9cc7558690e5d374f0a8d7c1bc0",
     "semantic_hash": ""
   },
   "resources/js/Pages/UserRole/Index.jsx": {
@@ -675,8 +675,8 @@
     "semantic_hash": ""
   },
   "routes/web.php": {
-    "mtime": 1784188184.1286035,
-    "ast_hash": "195f8210082d7d098c44772dface7433",
+    "mtime": 1784283005.3158624,
+    "ast_hash": "743baf419ebe4901ff2ea96de3ae92d3",
     "semantic_hash": ""
   },
   "tailwind.config.js": {
@@ -754,11 +754,6 @@
     "ast_hash": "f8dbb2660eb8d6f75fa1ca573f51ffd2",
     "semantic_hash": ""
   },
-  "check_stock.php": {
-    "mtime": 1784263529.6495898,
-    "ast_hash": "2bb9cc87f4b9026cf8c9fbf03e06a75a",
-    "semantic_hash": ""
-  },
   "database/seeders/BalancedLogGudangSeeder.php": {
     "mtime": 1784263529.6501884,
     "ast_hash": "9ed20b3eb6e2c5639896cbb24df8c2ff",
@@ -787,6 +782,36 @@
   "tests/Unit/UnitModelTest.php": {
     "mtime": 1784263529.6548038,
     "ast_hash": "677da9c31eb1751225553a965e0c5264",
+    "semantic_hash": ""
+  },
+  "app/Console/Commands/check_stock.php": {
+    "mtime": 1784521390.3598366,
+    "ast_hash": "7bccd60c0b262f0297e87321c82caceb",
+    "semantic_hash": ""
+  },
+  "app/Models/ActivityLog.php": {
+    "mtime": 1784283005.3100674,
+    "ast_hash": "b389d8b50ad17d09d8e19863e81abf20",
+    "semantic_hash": ""
+  },
+  "app/Traits/LogsActivity.php": {
+    "mtime": 1784283005.311563,
+    "ast_hash": "eb32644ea6d57feed8c0d72e164f70e2",
+    "semantic_hash": ""
+  },
+  "database/migrations/2026_07_17_000001_add_soft_deletes_to_log_gudang_tables.php": {
+    "mtime": 1784271182.7465506,
+    "ast_hash": "86daf8de73dd2713947b2403665f02d3",
+    "semantic_hash": ""
+  },
+  "database/migrations/2026_07_17_082033_create_activity_logs_table.php": {
+    "mtime": 1784283005.3124793,
+    "ast_hash": "3d1b563949242e14004ba0730a1e5561",
+    "semantic_hash": ""
+  },
+  "resources/js/assets/tabarok.jpg": {
+    "mtime": 1784283005.3158624,
+    "ast_hash": "f2fea68871b0eb716a118a99123c05cb",
     "semantic_hash": ""
   }
 }
