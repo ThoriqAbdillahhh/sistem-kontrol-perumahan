@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\LogKeluarHarian;
+use App\Models\LogMasukGudang;
 use App\Models\MatrixProgress;
 use App\Models\ProgressUnit;
 use App\Models\Unit;
@@ -49,13 +50,22 @@ class ProgressUnitSeeder extends Seeder
                     $tambahan = max(0, min($qtyDipakai - $sudahDipakai, $stokSaatIni));
 
                     if ($tambahan > 0) {
+                        // Determine harga: prefer material->harga; fallback to latest LogMasukGudang harga_satuan; final fallback a reasonable default
+                        $materialHarga = (float) ($detail->material->harga ?? 0);
+                        if ($materialHarga <= 0) {
+                            $latestHarga = LogMasukGudang::where('material_id', $detail->material_id)
+                                ->orderByDesc('tanggal')
+                                ->value('harga_satuan');
+                            $materialHarga = $latestHarga ? (float) $latestHarga : 150000;
+                        }
+
                         LogKeluarHarian::create([
                             'tanggal'     => $tanggal->toDateString(),
                             'unit_id'     => $unit->id,
                             'material_id' => $detail->material_id,
                             'qty'         => $tambahan,
-                            'harga'       => $detail->material->harga ?? 0,
-                            'total'       => $tambahan * ($detail->material->harga ?? 0),
+                            'harga'       => $materialHarga,
+                            'total'       => round($tambahan * $materialHarga, 2),
                             'keterangan'  => 'Pemakaian tahap '.$tahap->tahap_pekerjaan,
                             'created_by'  => $adminId,
                         ]);

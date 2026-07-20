@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 
 const STATUS_COLOR = {
@@ -48,6 +49,9 @@ export default function ProgressIndex({ units, monitoring }) {
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [expandedUnitId, setExpandedUnitId] = useState(null);
     const [historyUnit, setHistoryUnit] = useState(null);
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedStatusFilter, setSelectedStatusFilter] = useState(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         unit_id: '',
@@ -73,6 +77,22 @@ export default function ProgressIndex({ units, monitoring }) {
         });
     }
 
+    // Filter units berdasarkan status material
+    const filteredUnits = selectedStatusFilter
+        ? units.filter((unit) => {
+            const overallStatus = getOverallStatus(unit.id, monitoring);
+            return overallStatus === selectedStatusFilter;
+        })
+        : units;
+
+    const totalPages = pageSize === 'all' ? 1 : Math.ceil(filteredUnits.length / pageSize);
+    const paginatedUnits =
+        pageSize === 'all' ? filteredUnits : filteredUnits.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [pageSize, selectedStatusFilter]);
+
     return (
         <AuthenticatedLayout>
             <Head title="Update Progress Unit" />
@@ -87,6 +107,64 @@ export default function ProgressIndex({ units, monitoring }) {
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Daftar Unit ({filteredUnits.length}/{units.length})
+                                </h2>
+                                <div className="flex gap-1.5">
+                                    <button
+                                        onClick={() => setSelectedStatusFilter(null)}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === null
+                                                ? 'bg-slate-900 text-white'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        }`}
+                                    >
+                                        Semua
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedStatusFilter('AMAN')}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === 'AMAN'
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100'
+                                        }`}
+                                    >
+                                        Aman
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedStatusFilter('WARNING')}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === 'WARNING'
+                                                ? 'bg-amber-600 text-white'
+                                                : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100'
+                                        }`}
+                                    >
+                                        Warning
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedStatusFilter('BOROS')}
+                                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                            selectedStatusFilter === 'BOROS'
+                                                ? 'bg-red-600 text-white'
+                                                : 'bg-red-50 text-red-700 ring-1 ring-red-200 hover:bg-red-100'
+                                        }`}
+                                    >
+                                        Boros
+                                    </button>
+                                </div>
+                            </div>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-sky-600"
+                            >
+                                <option value={10}>10 / halaman</option>
+                                <option value={50}>50 / halaman</option>
+                                <option value="all">Semua</option>
+                            </select>
+                        </div>
                         <table className="w-full text-sm">
                             <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-500">
                                 <tr>
@@ -99,7 +177,7 @@ export default function ProgressIndex({ units, monitoring }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {units.map((unit) => (
+                                {paginatedUnits.map((unit) => (
                                     <React.Fragment key={unit.id}>
                                         <tr className="border-t border-slate-200 hover:bg-slate-50 transition-colors">
                                             <td className="px-4 py-3 font-mono font-bold text-sky-600">{unit.nama_unit}</td>
@@ -178,6 +256,29 @@ export default function ProgressIndex({ units, monitoring }) {
                                 ))}
                             </tbody>
                         </table>
+                        {pageSize !== 'all' && totalPages > 1 && (
+                            <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-4 py-3 text-sm">
+                                <button
+                                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    title="Sebelumnya"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                                >
+                                    <ChevronLeft size={15} />
+                                </button>
+                                <span className="text-slate-500">
+                                    Halaman {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    title="Selanjutnya"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40"
+                                >
+                                    <ChevronRight size={15} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {selectedUnit && (
@@ -329,4 +430,4 @@ export default function ProgressIndex({ units, monitoring }) {
             </div>
         </AuthenticatedLayout>
     );
-}
+} 77

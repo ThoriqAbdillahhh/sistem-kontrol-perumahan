@@ -40,6 +40,8 @@ export default function LogGudangIndex({
     const [pageKeluar, setPageKeluar] = useState(1);
     const [stokQuery, setStokQuery] = useState("");
     const [stokVisible, setStokVisible] = useState(5);
+    const [stokSortBy, setStokSortBy] = useState(''); // 'harga' | 'stok' | ''
+    const [stokSortDir, setStokSortDir] = useState('desc'); // 'asc' | 'desc'
 
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyData, setHistoryData] = useState([]);
@@ -622,7 +624,7 @@ export default function LogGudangIndex({
                     <div className="space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
                             <p className="font-bold">Stok Real-time</p>
-                            <div className="relative">
+                            <div className="relative flex items-center gap-2">
                                 <Search
                                     size={13}
                                     className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -637,15 +639,39 @@ export default function LogGudangIndex({
                                     }}
                                     className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                                 />
+                                <select
+                                    value={stokSortBy}
+                                    onChange={(e) => setStokSortBy(e.target.value)}
+                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
+                                >
+                                    <option value="">Urutkan</option>
+                                    <option value="harga">Harga (besar → kecil)</option>
+                                    <option value="stok">Stok (banyak → sedikit)</option>
+                                </select>
+                                <select
+                                    value={stokSortDir}
+                                    onChange={(e) => setStokSortDir(e.target.value)}
+                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
+                                >
+                                    <option value="desc">Desc</option>
+                                    <option value="asc">Asc</option>
+                                </select>
                             </div>
                         </div>
 
                         {stok
-                            .filter((s) =>
-                                s.nama
-                                    .toLowerCase()
-                                    .includes(stokQuery.toLowerCase()),
-                            )
+                            .filter((s) => s.nama.toLowerCase().includes(stokQuery.toLowerCase()))
+                            .sort((a, b) => {
+                                if (!stokSortBy) return 0;
+                                const dir = stokSortDir === 'asc' ? 1 : -1;
+                                if (stokSortBy === 'harga') {
+                                    return (Number(a.harga_satuan ?? 0) - Number(b.harga_satuan ?? 0)) * dir;
+                                }
+                                if (stokSortBy === 'stok') {
+                                    return (Number(a.sisa_stok ?? 0) - Number(b.sisa_stok ?? 0)) * dir;
+                                }
+                                return 0;
+                            })
                             .slice(0, stokVisible)
                             .map((s) => {
                                 const pct = s.total_masuk > 0

@@ -73,7 +73,7 @@ class MaterialSeeder extends Seeder
         ];
 
         foreach ($materials as $material) {
-            Material::updateOrCreate(
+            $m = Material::updateOrCreate(
                 ['kode_material' => $material['kode_material']],
                 [
                     'nama_material' => $material['nama_material'],
@@ -82,6 +82,28 @@ class MaterialSeeder extends Seeder
                     'harga'         => 0,
                 ]
             );
+
+            // If harga is not set (0), assign a reasonable default based on category
+            if ((float) $m->harga <= 0) {
+                $kategori = $m->kategori ?? $material['kategori'];
+                $default = match ($kategori) {
+                    'Struktur' => rand(50_000, 150_000),
+                    'Dinding'  => rand(10_000, 80_000),
+                    'Atap'     => rand(30_000, 120_000),
+                    'Finishing'=> rand(10_000, 60_000),
+                    'Plumbing' => rand(20_000, 100_000),
+                    'Listrik'  => rand(5_000, 50_000),
+                    'Sanitary' => rand(100_000, 400_000),
+                    'Pintu'    => rand(150_000, 600_000),
+                    'Jendela'  => rand(100_000, 400_000),
+                    'Lantai'   => rand(50_000, 250_000),
+                    'Plafon'   => rand(20_000, 80_000),
+                    'Pondasi'  => rand(30_000, 120_000),
+                    default    => rand(5_000, 150_000),
+                };
+
+                $m->update(['harga' => $default]);
+            }
         }
     }
 }

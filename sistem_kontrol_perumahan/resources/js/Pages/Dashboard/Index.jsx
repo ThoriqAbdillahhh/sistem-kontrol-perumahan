@@ -57,12 +57,45 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
     const [stokQuery, setStokQuery] = useState("");
     const [stokVisible, setStokVisible] = useState(STOK_LIMIT);
 
+    const [stokSortBy, setStokSortBy] = useState(''); // 'harga' | 'stok' | ''
+    const [stokSortDir, setStokSortDir] = useState('desc'); // 'asc' | 'desc'
+
     const [unitQuery, setUnitQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("Semua Status");
 
-    const filteredStok = stokGudang.filter((s) =>
-        s.nama.toLowerCase().includes(stokQuery.toLowerCase()),
-    );
+    // Normalize server payload: some fields come as snake_case (sisa_stok, harga_satuan).
+    // Create camel-case aliases used by the component (`sisaStok`, `persen`).
+    const normalizedStok = (stokGudang ?? []).map((s) => {
+        const totalMasuk = Number(s.total_masuk ?? s.totalMasuk ?? 0) || 1;
+        const sisa = Number(s.sisa_stok ?? s.sisaStok ?? 0);
+        const persen = Math.min(100, Math.round((sisa / totalMasuk) * 100));
+
+        return {
+            ...s,
+            // keep original snake_case values for sorting where used elsewhere
+            sisa_stok: s.sisa_stok ?? s.sisaStok ?? 0,
+            harga_satuan: s.harga_satuan ?? s.hargaSatuan ?? s.harga ?? 0,
+            // component-friendly aliases
+            sisaStok: sisa,
+            persen,
+            nama: s.nama ?? s.Nama ?? "",
+        };
+    });
+
+    const filteredStok = normalizedStok
+        .filter((s) => (s.nama || "").toLowerCase().includes(stokQuery.toLowerCase()))
+        .sort((a, b) => {
+            if (!stokSortBy) return 0;
+            const dir = stokSortDir === 'asc' ? 1 : -1;
+            if (stokSortBy === 'harga') {
+                return (Number(a.harga_satuan ?? 0) - Number(b.harga_satuan ?? 0)) * dir;
+            }
+            if (stokSortBy === 'stok') {
+                return (Number(a.sisa_stok ?? 0) - Number(b.sisa_stok ?? 0)) * dir;
+            }
+            return 0;
+        });
+
     const visibleStok = filteredStok.slice(0, stokVisible);
     const hasMore = filteredStok.length > stokVisible;
 
@@ -424,7 +457,7 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
                         <div className="flex items-center justify-between gap-2">
                             <p className="font-bold">Stok Gudang</p>
 
-                            <div className="relative">
+                            <div className="relative flex items-center gap-2">
                                 <Search
                                     size={13}
                                     className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -439,6 +472,23 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
                                     }}
                                     className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                                 />
+                                <select
+                                    value={stokSortBy}
+                                    onChange={(e) => setStokSortBy(e.target.value)}
+                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
+                                >
+                                    <option value="">Urutkan</option>
+                                    <option value="harga">Harga</option>
+                                    <option value="stok">Stok</option>
+                                </select>
+                                <select
+                                    value={stokSortDir}
+                                    onChange={(e) => setStokSortDir(e.target.value)}
+                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
+                                >
+                                    <option value="desc">Desc</option>
+                                    <option value="asc">Asc</option>
+                                </select>
                             </div>
                         </div>
 
