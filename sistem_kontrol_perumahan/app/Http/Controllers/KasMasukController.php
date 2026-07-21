@@ -23,7 +23,7 @@ class KasMasukController extends Controller
             ->whereYear('tanggal', now()->year)
             ->sum('nominal');
 
-        return Inertia::render('finance/KasMasuk', [
+        return Inertia::render('Finance/KasMasuk', [
             'kasMasuk' => $kasMasuk,
             'totalBulanIni' => $totalBulanIni,
             'akunOptions' => AkunReferensi::masuk()->get(['id', 'nama_akun']),

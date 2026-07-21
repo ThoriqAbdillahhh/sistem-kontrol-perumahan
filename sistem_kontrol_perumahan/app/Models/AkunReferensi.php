@@ -13,6 +13,7 @@ class AkunReferensi extends Model
         'kode_akun',
         'nama_akun',
         'kategori',
+        'jenis',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -40,5 +41,15 @@ class AkunReferensi extends Model
     public function histories()
     {
         return $this->hasMany(AkunReferensiHistory::class)->latest();
+    }
+
+    public function scopeMasuk($query)
+    {
+        return $query->where('jenis', 'masuk');
+    }
+
+    public function scopeKeluar($query)
+    {
+        return $query->where('jenis', 'keluar');
     }
 }
