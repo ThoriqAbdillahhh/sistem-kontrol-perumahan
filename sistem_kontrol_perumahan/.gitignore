@@ -34,3 +34,4 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 graphify-out/
+/graphify-out/

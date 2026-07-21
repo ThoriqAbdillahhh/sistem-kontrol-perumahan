@@ -2,31 +2,43 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AkunReferensi extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
+        'kode_akun',
         'nama_akun',
-        'jenis',
         'kategori',
-        'is_active',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'deleted_at' => 'datetime',
     ];
 
-    public function scopeMasuk($query)
+    public function creator()
     {
-        return $query->where('jenis', 'masuk')->where('is_active', true);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function scopeKeluar($query)
+    public function updater()
     {
-        return $query->where('jenis', 'keluar')->where('is_active', true);
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(AkunReferensiHistory::class)->latest();
     }
 }
