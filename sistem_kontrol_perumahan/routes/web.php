@@ -12,6 +12,7 @@ use App\Http\Controllers\LogGudangController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\UserRoleController;
 use App\Http\Controllers\AkunReferensiController;
+use App\Http\Controllers\HppController;
 use App\Http\Controllers\KartuMaterialUnitController;
 use App\Http\Controllers\KasMasukController;
 use App\Http\Controllers\KasKeluarController;
@@ -102,6 +103,8 @@ Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->prefix('finance'
         ->name('akun-referensi.destroy');
     Route::get('kartu-material-unit', [KartuMaterialUnitController::class, 'index'])
         ->name('kartu-material-unit');
+    Route::get('hpp-per-unit', [HppController::class, 'index'])
+        ->name('hpp-per-unit');
 });
 
 require __DIR__.'/auth.php';
