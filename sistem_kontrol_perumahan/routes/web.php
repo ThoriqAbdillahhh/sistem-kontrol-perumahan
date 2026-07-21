@@ -50,16 +50,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'role:Super Admin|Admin|Admin Keuangan'])->group(function () {
     Route::get('/log-gudang', [LogGudangController::class, 'index'])->name('gudang.index');
-    Route::prefix('log-gudang')->name('log-gudang.')->group(function () {
-        Route::get('/history', [LogGudangController::class, 'history'])->name('history');
-        Route::post('/masuk', [LogGudangController::class, 'storeMasuk'])->name('masuk.store');
-        Route::put('/masuk/{logMasuk}', [LogGudangController::class, 'updateMasuk'])->name('masuk.update');
-        Route::delete('/masuk/{logMasuk}', [LogGudangController::class, 'destroyMasuk'])->name('masuk.destroy');
-        Route::post('/keluar', [LogGudangController::class, 'storeKeluar'])->name('keluar.store');
-        Route::put('/keluar/{logKeluar}', [LogGudangController::class, 'updateKeluar'])->name('keluar.update');
-        Route::delete('/keluar/{logKeluar}', [LogGudangController::class, 'destroyKeluar'])->name('keluar.destroy');
-    });
+    Route::get('/log-gudang/history', [LogGudangController::class, 'history'])->name('log-gudang.history');
+});
+
+Route::middleware(['auth', 'role:Super Admin|Admin'])->prefix('log-gudang')->name('log-gudang.')->group(function () {
+    Route::post('/masuk', [LogGudangController::class, 'storeMasuk'])->name('masuk.store');
+    Route::put('/masuk/{logMasuk}', [LogGudangController::class, 'updateMasuk'])->name('masuk.update');
+    Route::delete('/masuk/{logMasuk}', [LogGudangController::class, 'destroyMasuk'])->name('masuk.destroy');
+    Route::post('/keluar', [LogGudangController::class, 'storeKeluar'])->name('keluar.store');
+    Route::put('/keluar/{logKeluar}', [LogGudangController::class, 'updateKeluar'])->name('keluar.update');
+    Route::delete('/keluar/{logKeluar}', [LogGudangController::class, 'destroyKeluar'])->name('keluar.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

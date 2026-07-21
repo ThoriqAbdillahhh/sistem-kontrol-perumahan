@@ -23,6 +23,7 @@ class LogGudangController extends Controller
         $stokService = new StokGudangService();
         $movingAvg = $stokService->hitungMovingAverage();
         $isSuperAdmin = Auth::user()?->hasRole('Super Admin') ?? false;
+        $canEdit = Auth::user()?->hasAnyRole(['Super Admin', 'Admin']) ?? false;
 
         $logMasukQuery = LogMasukGudang::with('material');
         $logKeluarQuery = LogKeluarHarian::with(['material', 'unit']);
@@ -95,6 +96,7 @@ class LogGudangController extends Controller
                             }),
             'units'     => Unit::orderBy('nama_unit')->get(['id', 'nama_unit', 'zona']),
             'stok'      => $stokService->stokSemuaMaterial(),
+            'canEdit'   => $canEdit,  
         ]);
     }
 

@@ -82,7 +82,7 @@ export default function Sidebar() {
             title: "Kartu Material Unit",
             route: "finance.kartu-material-unit",
             icon: ClipboardList,
-            roles: ["Super Admin", "Admin Keuangan"],
+            roles: ["Super Admin", "Admin"],
         },
         {
             title: "HPP per Unit",
@@ -90,11 +90,11 @@ export default function Sidebar() {
             icon: Database,
             roles: ["Super Admin", "Admin Keuangan"],
         },
-        {
+       {
             title: "Log Masuk & Keluar",
-            route: "finance.log-keuangan",
+            route: "gudang.index",
             icon: Boxes,
-            roles: ["Super Admin", "Admin Keuangan"],
+            roles: ["Admin Keuangan"],
         },
         {
             title: "Akun Referensi",
@@ -180,9 +180,7 @@ export default function Sidebar() {
 
                 {financeMenuItems.length > 0 && (
                     <>
-                        <p className="mt-6 mb-4 px-3 text-[11px] font-bold uppercase tracking-[0.25em] text-sidebar-foreground/40">
-                            Keuangan Proyek
-                        </p>
+                        
                         {financeMenuItems.map((menu) => {
                             const Icon = menu.icon;
                             const routeExists = route().has(menu.route);

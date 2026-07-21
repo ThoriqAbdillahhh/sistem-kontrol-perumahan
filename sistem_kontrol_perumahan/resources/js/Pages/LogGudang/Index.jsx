@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect  } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Head, useForm, router, usePage } from "@inertiajs/react";
 import { Plus, Edit3, Trash2, X, History, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
@@ -18,6 +18,7 @@ export default function LogGudangIndex({
     materials,
     units,
     stok,
+    canEdit,
 }) {
     const { auth } = usePage().props;
     const userRole = auth?.user?.roles?.[0] ?? "";
@@ -238,9 +239,9 @@ export default function LogGudangIndex({
         if (tab === "masuk") {
             editTarget
                 ? masukForm.put(
-                      route("log-gudang.masuk.update", editTarget.id),
-                      options,
-                  )
+                    route("log-gudang.masuk.update", editTarget.id),
+                    options,
+                )
                 : masukForm.post(route("log-gudang.masuk.store"), options);
         } else if (editTarget) {
             keluarForm.put(
@@ -304,11 +305,10 @@ export default function LogGudangIndex({
                                     setModalOpen(false);
                                     setDeleteTarget(null);
                                 }}
-                                className={`cursor-pointer rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
-                                    tab === t
-                                        ? "bg-primary text-white"
-                                        : "border border-border bg-white"
-                                }`}
+                                className={`cursor-pointer rounded-xl px-5 py-2.5 text-sm font-semibold transition ${tab === t
+                                    ? "bg-primary text-white"
+                                    : "border border-border bg-white"
+                                    }`}
                             >
                                 Log{" "}
                                 {t === "masuk" ? "Masuk (In)" : "Keluar (Out)"}
@@ -327,13 +327,15 @@ export default function LogGudangIndex({
                                         value={search}
                                         onChange={setSearch}
                                     />
-                                    <button
-                                        onClick={openAdd}
-                                        className="cursor-pointer rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white"
-                                    >
-                                        <Plus size={14} className="inline" />{" "}
-                                        Tambah
-                                    </button>
+                                    {canEdit && (
+                                        <button
+                                            onClick={openAdd}
+                                            className="cursor-pointer rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white"
+                                        >
+                                            <Plus size={14} className="inline" />{" "}
+                                            Tambah
+                                        </button>
+                                    )}
                                 </div>
                             }
                         >
@@ -418,22 +420,24 @@ export default function LogGudangIndex({
                                                     {r.keterangan}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <div className="flex gap-2 text-muted-foreground">
-                                                        <Edit3
-                                                            size={14}
-                                                            className="cursor-pointer hover:text-primary"
-                                                            onClick={() =>
-                                                                openEdit(r)
-                                                            }
-                                                        />
-                                                        <Trash2
-                                                            size={14}
-                                                            className="cursor-pointer hover:text-red-500"
-                                                            onClick={() =>
-                                                                handleDelete(r)
-                                                            }
-                                                        />
-                                                    </div>
+                                                    {canEdit && (
+                                                        <div className="flex gap-2 text-muted-foreground">
+                                                            <Edit3
+                                                                size={14}
+                                                                className="cursor-pointer hover:text-primary"
+                                                                onClick={() =>
+                                                                    openEdit(r)
+                                                                }
+                                                            />
+                                                            <Trash2
+                                                                size={14}
+                                                                className="cursor-pointer hover:text-red-500"
+                                                                onClick={() =>
+                                                                    handleDelete(r)
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -476,13 +480,15 @@ export default function LogGudangIndex({
                                         value={search}
                                         onChange={setSearch}
                                     />
-                                    <button
-                                        onClick={openAdd}
-                                        className="cursor-pointer rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white"
-                                    >
-                                        <Plus size={14} className="inline" />{" "}
-                                        Tambah
-                                    </button>
+                                    {canEdit && (
+                                        <button
+                                            onClick={openAdd}
+                                            className="cursor-pointer rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white"
+                                        >
+                                            <Plus size={14} className="inline" />{" "}
+                                            Tambah
+                                        </button>
+                                    )}
                                 </div>
                             }
                         >
@@ -570,22 +576,24 @@ export default function LogGudangIndex({
                                                     {r.keterangan}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <div className="flex gap-2 text-muted-foreground">
-                                                        <Edit3
-                                                            size={14}
-                                                            className="cursor-pointer hover:text-primary"
-                                                            onClick={() =>
-                                                                openEdit(r)
-                                                            }
-                                                        />
-                                                        <Trash2
-                                                            size={14}
-                                                            className="cursor-pointer hover:text-red-500"
-                                                            onClick={() =>
-                                                                handleDelete(r)
-                                                            }
-                                                        />
-                                                    </div>
+                                                    {canEdit && (
+                                                        <div className="flex gap-2 text-muted-foreground">
+                                                            <Edit3
+                                                                size={14}
+                                                                className="cursor-pointer hover:text-primary"
+                                                                onClick={() =>
+                                                                    openEdit(r)
+                                                                }
+                                                            />
+                                                            <Trash2
+                                                                size={14}
+                                                                className="cursor-pointer hover:text-red-500"
+                                                                onClick={() =>
+                                                                    handleDelete(r)
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -693,15 +701,15 @@ export default function LogGudangIndex({
                             .map((s) => {
                                 const pct = s.total_masuk > 0
                                     ? Math.min(
-                                          100,
-                                          (s.sisa_stok / s.total_masuk) * 100,
-                                      )
+                                        100,
+                                        (s.sisa_stok / s.total_masuk) * 100,
+                                    )
                                     : 0;
                                 const barColor = s.is_warning
                                     ? "bg-red-500"
                                     : pct > 50
-                                      ? "bg-emerald-500"
-                                      : "bg-amber-400";
+                                        ? "bg-emerald-500"
+                                        : "bg-amber-400";
                                 return (
                                     <div
                                         key={s.material_id}
@@ -736,14 +744,14 @@ export default function LogGudangIndex({
                                     .toLowerCase()
                                     .includes(stokQuery.toLowerCase()),
                             ).length > stokVisible && (
-                                <button
-                                    type="button"
-                                    onClick={() => setStokVisible((v) => v + 5)}
-                                    className="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
-                                >
-                                    Tampilkan lainnya
-                                </button>
-                            )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setStokVisible((v) => v + 5)}
+                                        className="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+                                    >
+                                        Tampilkan lainnya
+                                    </button>
+                                )}
                             {stokVisible > 5 && (
                                 <button
                                     type="button"
@@ -760,12 +768,12 @@ export default function LogGudangIndex({
                                 .toLowerCase()
                                 .includes(stokQuery.toLowerCase()),
                         ).length === 0 && (
-                            <p className="text-xs text-muted-foreground">
-                                {stokQuery
-                                    ? `Tidak ada hasil untuk "${stokQuery}".`
-                                    : "Belum ada data stok gudang."}
-                            </p>
-                        )}
+                                <p className="text-xs text-muted-foreground">
+                                    {stokQuery
+                                        ? `Tidak ada hasil untuk "${stokQuery}".`
+                                        : "Belum ada data stok gudang."}
+                                </p>
+                            )}
                     </div>
                 </div>
 
@@ -903,20 +911,20 @@ export default function LogGudangIndex({
                                                         </select>
                                                         {unitRows.length >
                                                             1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    removeUnitRow(
-                                                                        index,
-                                                                    )
-                                                                }
-                                                                className="cursor-pointer rounded-xl border border-border px-3 text-muted-foreground hover:text-red-500"
-                                                            >
-                                                                <X
-                                                                    size={14}
-                                                                />
-                                                            </button>
-                                                        )}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        removeUnitRow(
+                                                                            index,
+                                                                        )
+                                                                    }
+                                                                    className="cursor-pointer rounded-xl border border-border px-3 text-muted-foreground hover:text-red-500"
+                                                                >
+                                                                    <X
+                                                                        size={14}
+                                                                    />
+                                                                </button>
+                                                            )}
                                                     </div>
                                                 );
                                             })}
@@ -996,7 +1004,7 @@ export default function LogGudangIndex({
                                         <Field
                                             label={
                                                 tab === "keluar" &&
-                                                !editTarget
+                                                    !editTarget
                                                     ? qtyMode === "total"
                                                         ? `Total Barang${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
                                                         : `Qty per Unit${selectedMaterial?.satuan ? ` (${selectedMaterial.satuan})` : ""}`
@@ -1005,19 +1013,19 @@ export default function LogGudangIndex({
                                             type="number"
                                             value={
                                                 tab === "keluar" &&
-                                                !editTarget
+                                                    !editTarget
                                                     ? qtyInputRaw
                                                     : form.data.qty
                                             }
                                             onChange={
                                                 tab === "keluar" &&
-                                                !editTarget
+                                                    !editTarget
                                                     ? setQtyInputRaw
                                                     : (v) =>
-                                                          form.setData(
-                                                              "qty",
-                                                              v,
-                                                          )
+                                                        form.setData(
+                                                            "qty",
+                                                            v,
+                                                        )
                                             }
                                             error={form.errors.qty}
                                         />
@@ -1028,21 +1036,21 @@ export default function LogGudangIndex({
                                                 <p className="mt-1 text-[11px] text-muted-foreground">
                                                     {qtyMode === "total"
                                                         ? `≈ ${(
-                                                              Number(
-                                                                  qtyInputRaw,
-                                                              ) /
-                                                              selectedUnitIds.length
-                                                          ).toLocaleString(
-                                                              "id-ID",
-                                                          )} per unit`
+                                                            Number(
+                                                                qtyInputRaw,
+                                                            ) /
+                                                            selectedUnitIds.length
+                                                        ).toLocaleString(
+                                                            "id-ID",
+                                                        )} per unit`
                                                         : `Total: ${(
-                                                              Number(
-                                                                  qtyInputRaw,
-                                                              ) *
-                                                              selectedUnitIds.length
-                                                          ).toLocaleString(
-                                                              "id-ID",
-                                                          )}`}
+                                                            Number(
+                                                                qtyInputRaw,
+                                                            ) *
+                                                            selectedUnitIds.length
+                                                        ).toLocaleString(
+                                                            "id-ID",
+                                                        )}`}
                                                 </p>
                                             )}
                                     </div>
@@ -1128,9 +1136,8 @@ export default function LogGudangIndex({
                     title="Hapus data log gudang?"
                     message={
                         deleteTarget
-                            ? `Data ${
-                                  tab === "masuk" ? "masuk" : "keluar"
-                              } untuk ${deleteTarget?.material?.nama_material ?? "material ini"} akan dihapus.`
+                            ? `Data ${tab === "masuk" ? "masuk" : "keluar"
+                            } untuk ${deleteTarget?.material?.nama_material ?? "material ini"} akan dihapus.`
                             : ""
                     }
                     confirmText="Ya, Hapus"
@@ -1279,11 +1286,11 @@ function Field({ label, value, onChange, placeholder, error, type = "text" }) {
 // Input Rupiah: tampilan terformat "Rp 1.250.000", value yang dikirim ke form tetap angka mentah (string digit).
 function CurrencyField({ label, value, onChange, error, readOnly = false, }) {
     function handleChange(e) {
-    if (readOnly) return;
+        if (readOnly) return;
 
-    const digits = e.target.value.replace(/\D/g, "");
-    onChange?.(digits);
-}
+        const digits = e.target.value.replace(/\D/g, "");
+        onChange?.(digits);
+    }
 
     const displayValue =
         value === "" || value === null || value === undefined
@@ -1306,9 +1313,8 @@ function CurrencyField({ label, value, onChange, error, readOnly = false, }) {
                     onChange={handleChange}
                     readOnly={readOnly}
                     placeholder="0"
-                    className={`w-full rounded-xl border border-border py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
-                        readOnly ? "bg-secondary" : "bg-input-background"
-                    }`}
+                    className={`w-full rounded-xl border border-border py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${readOnly ? "bg-secondary" : "bg-input-background"
+                        }`}
                 />
             </div>
             {error && (
