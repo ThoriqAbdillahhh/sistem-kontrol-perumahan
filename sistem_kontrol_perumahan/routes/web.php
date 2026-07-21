@@ -12,6 +12,7 @@ use App\Http\Controllers\LogGudangController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\UserRoleController;
 use App\Http\Controllers\AkunReferensiController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\KartuMaterialUnitController;
 
 Route::get('/', function () {
@@ -93,10 +94,22 @@ Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->group(function (
             ->name('akun-referensi.update');
         Route::delete('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'destroy'])
             ->name('akun-referensi.destroy');
-        Route::get('akun-referensi', [AkunReferensiController::class, 'index'])
-            ->name('akun-referensi');
         Route::get('kartu-material-unit', [KartuMaterialUnitController::class, 'index'])
             ->name('kartu-material-unit');
+        Route::get('kas-masuk', [FinanceController::class, 'kasMasuk'])
+            ->name('kas-masuk');
+        Route::post('kas-masuk', [FinanceController::class, 'storeKasMasuk'])
+            ->name('kas-masuk.store');
+        Route::get('kas-keluar', [FinanceController::class, 'kasKeluar'])
+            ->name('kas-keluar');
+        Route::post('kas-keluar', [FinanceController::class, 'storeKasKeluar'])
+            ->name('kas-keluar.store');
+        Route::get('hpp-per-unit', [FinanceController::class, 'hppPerUnit'])
+            ->name('hpp-per-unit');
+        Route::get('log-keuangan', [FinanceController::class, 'logKeuangan'])
+            ->name('log-keuangan');
+        Route::get('spj-otomatis', [FinanceController::class, 'spjOtomatis'])
+            ->name('spj-otomatis');
     });
 });
 

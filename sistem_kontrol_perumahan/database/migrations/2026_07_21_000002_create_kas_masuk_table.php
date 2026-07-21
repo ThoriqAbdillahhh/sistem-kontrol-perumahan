@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->date('tanggal');
             $table->foreignId('akun_id')
-                ->constrained('master_akun')
+                ->constrained('akun_referensis')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
             $table->decimal('nominal', 15, 2);
