@@ -12,6 +12,7 @@ use App\Http\Controllers\LogGudangController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\UserRoleController;
 use App\Http\Controllers\AkunReferensiController;
+use App\Http\Controllers\KartuMaterialUnitController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -92,6 +93,10 @@ Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->group(function (
             ->name('akun-referensi.update');
         Route::delete('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'destroy'])
             ->name('akun-referensi.destroy');
+        Route::get('akun-referensi', [AkunReferensiController::class, 'index'])
+            ->name('akun-referensi');
+        Route::get('kartu-material-unit', [KartuMaterialUnitController::class, 'index'])
+            ->name('kartu-material-unit');
     });
 });
 

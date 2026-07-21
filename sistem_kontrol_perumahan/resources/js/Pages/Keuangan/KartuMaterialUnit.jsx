@@ -5,13 +5,17 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 // SESUAIKAN import layout di atas dengan layout yang sudah dipakai
 // di dashboard Super Admin Anda (nama & lokasi file mungkin berbeda).
 
-export default function KartuMaterialUnit({ units, materialList, materialSatuan }) {
+export default function KartuMaterialUnit({ units = [], materialList = [], materialSatuan = {} }) {
   const [query, setQuery] = useState('');
   const [zone, setZone] = useState('Semua Zona');
 
-  const zones = [...new Set(units.map((u) => u.zona))];
+  const safeUnits = Array.isArray(units) ? units : [];
+  const safeMaterialList = Array.isArray(materialList) ? materialList : [];
+  const safeMaterialSatuan = materialSatuan && typeof materialSatuan === 'object' ? materialSatuan : {};
 
-  const rows = units.filter(
+  const zones = [...new Set(safeUnits.map((u) => u.zona).filter(Boolean))];
+
+  const rows = safeUnits.filter(
     (u) =>
       (zone === 'Semua Zona' || u.zona === zone) &&
       `${u.id} ${u.zona}`.toLowerCase().includes(query.toLowerCase())
@@ -60,7 +64,7 @@ export default function KartuMaterialUnit({ units, materialList, materialSatuan 
             <table className="w-full min-w-[1380px] text-sm">
               <thead className="bg-muted text-[10px] uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  {['Unit', 'Zona', 'Progress', ...materialList].map((h) => (
+                  {['Unit', 'Zona', 'Progress', ...safeMaterialList].map((h) => (
                     <th key={h} className="whitespace-nowrap px-4 py-3 text-left font-bold">
                       {h}
                     </th>
@@ -86,16 +90,16 @@ export default function KartuMaterialUnit({ units, materialList, materialSatuan 
                           <span className="font-mono text-xs">{unit.progress}%</span>
                         </div>
                       </td>
-                      {materialList.map((mat) => (
+                      {safeMaterialList.map((mat) => (
                         <td key={mat} className="px-4 py-3 font-mono text-xs">
-                          {unit.usage[mat] ? `${unit.usage[mat]} ${materialSatuan[mat]}` : '—'}
+                          {unit.usage[mat] ? `${unit.usage[mat]} ${safeMaterialSatuan[mat] || ''}` : '—'}
                         </td>
                       ))}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3 + materialList.length} className="px-5 py-14 text-center">
+                    <td colSpan={3 + safeMaterialList.length} className="px-5 py-14 text-center">
                       <PackageCheck size={26} className="mx-auto mb-2 text-muted-foreground/40" />
                       <p className="text-sm font-semibold text-muted-foreground">
                         Tidak ada unit pada filter ini
