@@ -11,6 +11,19 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LogGudangController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\UserRoleController;
+use App\Http\Controllers\KasMasukController;
+use App\Http\Controllers\KasKeluarController;
+use App\Http\Controllers\SpjController;
+
+Route::get('spj', [SpjController::class, 'index'])->name('spj.index');
+
+Route::get('kas-keluar', [KasKeluarController::class, 'index'])->name('kasKeluar.index');
+Route::post('kas-keluar', [KasKeluarController::class, 'store'])->name('kasKeluar.store');
+
+Route::middleware(['auth'])->prefix('keuangan')->name('keuangan.')->group(function () {
+    Route::get('kas-masuk', [KasMasukController::class, 'index'])->name('kasMasuk.index');
+    Route::post('kas-masuk', [KasMasukController::class, 'store'])->name('kasMasuk.store');
+});
 
 Route::get('/', function () {
     return auth()->check()
