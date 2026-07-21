@@ -11,11 +11,15 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LogGudangController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\UserRoleController;
+use App\Http\Controllers\AkunReferensiController;
 
 Route::get('/', function () {
-    return auth()->check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'laravelVersion' => Application::VERSION,
+        'phpVersion' => PHP_VERSION,
+    ]);
 });
 
 Route::middleware('auth')->group(function () {
@@ -36,36 +40,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/unit/{unit}', [UnitController::class, 'update'])->name('unit.update');
     Route::delete('/unit/bulk-destroy', [UnitController::class, 'destroyBulk'])->name('unit.destroyBulk');
     Route::delete('/unit/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
-});
-
-Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->group(function () {
-    Route::get('/finance/kartu-material-unit', function () {
-        return Inertia::render('Finance/KartuMaterialUnit');
-    })->name('finance.kartu-material-unit');
-
-    Route::get('/finance/hpp-per-unit', function () {
-        return Inertia::render('Finance/HppPerUnit');
-    })->name('finance.hpp-per-unit');
-
-    Route::get('/finance/log-keuangan', function () {
-        return Inertia::render('Finance/LogKeuangan');
-    })->name('finance.log-keuangan');
-
-    Route::get('/finance/akun-referensi', function () {
-        return Inertia::render('Finance/AkunReferensi');
-    })->name('finance.akun-referensi');
-
-    Route::get('/finance/kas-masuk', function () {
-        return Inertia::render('Finance/KasMasuk');
-    })->name('finance.kas-masuk');
-
-    Route::get('/finance/kas-keluar', function () {
-        return Inertia::render('Finance/KasKeluar');
-    })->name('finance.kas-keluar');
-
-    Route::get('/finance/spj-otomatis', function () {
-        return Inertia::render('Finance/SpjOtomatis');
-    })->name('finance.spj-otomatis');
 });
 
 Route::middleware('auth')->group(function () {
@@ -106,6 +80,19 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/user-role/{user}', [UserRoleController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/toggle', [UserRoleController::class, 'toggleStatus'])->name('users.toggle');
     Route::delete('/user-role/{user}', [UserRoleController::class, 'destroy'])->name('users.destroy');
+});
+
+Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->group(function () {
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('akun-referensi', [AkunReferensiController::class, 'index'])
+            ->name('akun-referensi');
+        Route::post('akun-referensi', [AkunReferensiController::class, 'store'])
+            ->name('akun-referensi.store');
+        Route::put('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'update'])
+            ->name('akun-referensi.update');
+        Route::delete('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'destroy'])
+            ->name('akun-referensi.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';
