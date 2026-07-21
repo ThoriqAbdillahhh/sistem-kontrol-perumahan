@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('akun_referensis')) {
+            return;
+        }
+
         Schema::create('akun_referensis', function (Blueprint $table) {
             $table->id();
             $table->string('kode_akun', 20)->unique();
