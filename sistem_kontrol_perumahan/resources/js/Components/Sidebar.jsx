@@ -77,6 +77,57 @@ export default function Sidebar() {
         },
     ];
 
+    const financeMenus = [
+        {
+            title: "Kartu Material Unit",
+            route: "finance.kartu-material-unit",
+            icon: ClipboardList,
+            roles: ["Super Admin", "Admin Keuangan"],
+        },
+        {
+            title: "HPP per Unit",
+            route: "finance.hpp-per-unit",
+            icon: Database,
+            roles: ["Super Admin", "Admin Keuangan"],
+        },
+        {
+            title: "Log Masuk & Keluar",
+            route: "finance.log-keuangan",
+            icon: Boxes,
+            roles: ["Super Admin", "Admin Keuangan"],
+        },
+        {
+            title: "Akun Referensi",
+            route: "finance.akun-referensi",
+            icon: Users,
+            roles: ["Super Admin", "Admin Keuangan"],
+        },
+        {
+            title: "Kas Masuk",
+            route: "finance.kas-masuk",
+            icon: Home,
+            roles: ["Super Admin", "Admin Keuangan"],
+        },
+        {
+            title: "Kas Keluar",
+            route: "finance.kas-keluar",
+            icon: Home,
+            roles: ["Super Admin", "Admin Keuangan"],
+        },
+        {
+            title: "SPJ Otomatis",
+            route: "finance.spj-otomatis",
+            icon: TrendingUp,
+            roles: ["Super Admin", "Admin Keuangan"],
+        },
+    ];
+
+    const showMainMenu = role !== "Admin Keuangan";
+    const mainMenuItems = showMainMenu
+        ? menus.filter((menu) => menu.roles.includes(role))
+        : [];
+    const financeMenuItems = financeMenus.filter((menu) => menu.roles.includes(role));
+
     const initials = auth.user.name
         .split(" ")
         .map((w) => w[0])
@@ -102,32 +153,62 @@ export default function Sidebar() {
                     MENU
                 </p>
 
-                {menus
-                    .filter((menu) => menu.roles.includes(role))
-                    .map((menu) => {
-                        const Icon = menu.icon;
-                        const routeExists = route().has(menu.route);
-                        const href = routeExists ? route(menu.route) : "#";
-                        const isActive =
-                            routeExists && route().current(menu.route);
+                {mainMenuItems.map((menu) => {
+                    const Icon = menu.icon;
+                    const routeExists = route().has(menu.route);
+                    const href = routeExists ? route(menu.route) : "#";
+                    const isActive =
+                        routeExists && route().current(menu.route);
 
-                        return (
-                            <Link
-                                key={menu.title}
-                                href={href}
-                                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 transition-all
-                                    ${
-                                        isActive
-                                            ? "bg-primary text-white shadow-md"
-                                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
-                                    }
-                                    ${!routeExists ? "opacity-40 cursor-not-allowed" : ""}`}
-                            >
-                                <Icon size={16} />
-                                {menu.title}
-                            </Link>
-                        );
-                    })}
+                    return (
+                        <Link
+                            key={menu.title}
+                            href={href}
+                            className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 transition-all
+                                ${
+                                    isActive
+                                        ? "bg-primary text-white shadow-md"
+                                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
+                                }
+                                ${!routeExists ? "opacity-40 cursor-not-allowed" : ""}`}
+                        >
+                            <Icon size={16} />
+                            {menu.title}
+                        </Link>
+                    );
+                })}
+
+                {financeMenuItems.length > 0 && (
+                    <>
+                        <p className="mt-6 mb-4 px-3 text-[11px] font-bold uppercase tracking-[0.25em] text-sidebar-foreground/40">
+                            Keuangan Proyek
+                        </p>
+                        {financeMenuItems.map((menu) => {
+                            const Icon = menu.icon;
+                            const routeExists = route().has(menu.route);
+                            const href = routeExists ? route(menu.route) : "#";
+                            const isActive =
+                                routeExists && route().current(menu.route);
+
+                            return (
+                                <Link
+                                    key={menu.title}
+                                    href={href}
+                                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 transition-all
+                                        ${
+                                            isActive
+                                                ? "bg-primary text-white shadow-md"
+                                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white"
+                                        }
+                                        ${!routeExists ? "opacity-40 cursor-not-allowed" : ""}`}
+                                >
+                                    <Icon size={16} />
+                                    {menu.title}
+                                </Link>
+                            );
+                        })}
+                    </>
+                )}
             </nav>
 
             <div className="mt-auto border-t border-sidebar-border p-4">

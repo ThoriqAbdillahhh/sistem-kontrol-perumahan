@@ -32,6 +32,13 @@ class UserSeeder extends Seeder
                 'password' => 'owner123',
                 'role' => 'Owner',
             ],
+            [
+                'name' => 'Admin Keuangan',
+                'username' => 'adminkeuangan',
+                'email' => 'adminkeuangan@gmail.com',
+                'password' => 'adminkeuangan123',
+                'role' => 'Admin Keuangan',
+            ],
         ];
 
 

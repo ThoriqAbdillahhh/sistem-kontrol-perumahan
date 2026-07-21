@@ -21,6 +21,7 @@ class RolePermissionSeeder extends Seeder
             'progress',
             'standar',
             'users',
+            'finance',
         ];
 
         foreach ($permissions as $permission) {
@@ -45,6 +46,11 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        $adminKeuangan = Role::firstOrCreate([
+            'name' => 'Admin Keuangan',
+            'guard_name' => 'web',
+        ]);
+
         $superAdmin->syncPermissions($permissions);
 
         $admin->syncPermissions([
@@ -59,6 +65,10 @@ class RolePermissionSeeder extends Seeder
         $owner->syncPermissions([
             'dashboard',
             'progress',
+        ]);
+
+        $adminKeuangan->syncPermissions([
+            'finance',
         ]);
     }
 }

@@ -38,6 +38,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/unit/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
 });
 
+Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->group(function () {
+    Route::get('/finance/kartu-material-unit', function () {
+        return Inertia::render('Finance/KartuMaterialUnit');
+    })->name('finance.kartu-material-unit');
+
+    Route::get('/finance/hpp-per-unit', function () {
+        return Inertia::render('Finance/HppPerUnit');
+    })->name('finance.hpp-per-unit');
+
+    Route::get('/finance/log-keuangan', function () {
+        return Inertia::render('Finance/LogKeuangan');
+    })->name('finance.log-keuangan');
+
+    Route::get('/finance/akun-referensi', function () {
+        return Inertia::render('Finance/AkunReferensi');
+    })->name('finance.akun-referensi');
+
+    Route::get('/finance/kas-masuk', function () {
+        return Inertia::render('Finance/KasMasuk');
+    })->name('finance.kas-masuk');
+
+    Route::get('/finance/kas-keluar', function () {
+        return Inertia::render('Finance/KasKeluar');
+    })->name('finance.kas-keluar');
+
+    Route::get('/finance/spj-otomatis', function () {
+        return Inertia::render('Finance/SpjOtomatis');
+    })->name('finance.spj-otomatis');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/log-gudang', [LogGudangController::class, 'index'])->name('gudang.index');
