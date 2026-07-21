@@ -12,8 +12,12 @@ use App\Http\Controllers\LogGudangController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\UserRoleController;
 use App\Http\Controllers\AkunReferensiController;
+use App\Http\Controllers\HppController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\KartuMaterialUnitController;
+use App\Http\Controllers\KasMasukController;
+use App\Http\Controllers\KasKeluarController;
+use App\Http\Controllers\SpjController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -84,33 +88,24 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/user-role/{user}', [UserRoleController::class, 'destroy'])->name('users.destroy');
 });
 
-Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->group(function () {
-    Route::prefix('finance')->name('finance.')->group(function () {
-        Route::get('akun-referensi', [AkunReferensiController::class, 'index'])
-            ->name('akun-referensi');
-        Route::post('akun-referensi', [AkunReferensiController::class, 'store'])
-            ->name('akun-referensi.store');
-        Route::put('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'update'])
-            ->name('akun-referensi.update');
-        Route::delete('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'destroy'])
-            ->name('akun-referensi.destroy');
-        Route::get('kartu-material-unit', [KartuMaterialUnitController::class, 'index'])
-            ->name('kartu-material-unit');
-        Route::get('kas-masuk', [FinanceController::class, 'kasMasuk'])
-            ->name('kas-masuk');
-        Route::post('kas-masuk', [FinanceController::class, 'storeKasMasuk'])
-            ->name('kas-masuk.store');
-        Route::get('kas-keluar', [FinanceController::class, 'kasKeluar'])
-            ->name('kas-keluar');
-        Route::post('kas-keluar', [FinanceController::class, 'storeKasKeluar'])
-            ->name('kas-keluar.store');
-        Route::get('hpp-per-unit', [FinanceController::class, 'hppPerUnit'])
-            ->name('hpp-per-unit');
-        Route::get('log-keuangan', [FinanceController::class, 'logKeuangan'])
-            ->name('log-keuangan');
-        Route::get('spj-otomatis', [FinanceController::class, 'spjOtomatis'])
-            ->name('spj-otomatis');
-    });
+Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->prefix('finance')->name('finance.')->group(function () {
+    Route::get('spj-otomatis', [SpjController::class, 'index'])->name('spj-otomatis');
+    Route::get('kas-keluar', [KasKeluarController::class, 'index'])->name('kas-keluar');
+    Route::post('kas-keluar', [KasKeluarController::class, 'store'])->name('kas-keluar.store');
+    Route::get('kas-masuk', [KasMasukController::class, 'index'])->name('kas-masuk');
+    Route::post('kas-masuk', [KasMasukController::class, 'store'])->name('kas-masuk.store');
+    Route::get('akun-referensi', [AkunReferensiController::class, 'index'])
+        ->name('akun-referensi');
+    Route::post('akun-referensi', [AkunReferensiController::class, 'store'])
+        ->name('akun-referensi.store');
+    Route::put('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'update'])
+        ->name('akun-referensi.update');
+    Route::delete('akun-referensi/{akunReferensi}', [AkunReferensiController::class, 'destroy'])
+        ->name('akun-referensi.destroy');
+    Route::get('kartu-material-unit', [KartuMaterialUnitController::class, 'index'])
+        ->name('kartu-material-unit');
+    Route::get('hpp-per-unit', [HppController::class, 'index'])
+        ->name('hpp-per-unit');
 });
 
 require __DIR__.'/auth.php';

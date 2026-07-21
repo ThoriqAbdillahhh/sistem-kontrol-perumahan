@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             MaterialSeeder::class,
             RolePermissionSeeder::class,
+            AkunReferensiSeeder::class,
             MatrixProgressSeeder::class,
             BalancedLogGudangSeeder::class,
             ProgressUnitSeeder::class,

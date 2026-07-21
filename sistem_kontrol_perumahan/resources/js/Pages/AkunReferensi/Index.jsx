@@ -49,7 +49,9 @@ function AkunModal({ open, onClose, editingAkun }) {
 
         if (isEdit) {
             put(
-                route("finance.akun-referensi.update", editingAkun.id),
+                route("finance.akun-referensi.update", {
+                    akunReferensi: editingAkun.id,
+                }),
                 options,
             );
         } else {
@@ -174,7 +176,7 @@ function AkunModal({ open, onClose, editingAkun }) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
                         >
                             Simpan
                         </button>
@@ -219,7 +221,9 @@ export default function Index({ akunList = [] }) {
     function handleDeleteConfirm() {
         setDeleting(true);
         router.delete(
-            route("finance.akun-referensi.destroy", akunToDelete.id),
+            route("finance.akun-referensi.destroy", {
+                akunReferensi: akunToDelete.id,
+            }),
             {
                 preserveScroll: true,
                 onFinish: () => {
@@ -249,7 +253,7 @@ export default function Index({ akunList = [] }) {
                     <button
                         type="button"
                         onClick={openAdd}
-                        className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
+                        className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
                     >
                         <Plus size={16} />
                         Tambah Akun

@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class KasMasuk extends Model
 {
-    protected $table = 'kas_masuk';
+    use HasFactory;
 
     protected $fillable = [
         'tanggal',
-        'akun_id',
-        'nominal',
+        'akun_referensi_id',
         'keterangan',
+        'nominal',
+        'dari',
+        'untuk',
+        'minggu_ke',
         'created_by',
     ];
 
@@ -21,9 +25,9 @@ class KasMasuk extends Model
         'nominal' => 'decimal:2',
     ];
 
-    public function akun()
+    public function akunReferensi()
     {
-        return $this->belongsTo(AkunReferensi::class, 'akun_id');
+        return $this->belongsTo(AkunReferensi::class);
     }
 
     public function creator()

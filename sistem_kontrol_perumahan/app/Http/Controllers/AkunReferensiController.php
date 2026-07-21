@@ -18,7 +18,7 @@ class AkunReferensiController extends Controller
         // Super Admin lihat semua termasuk yang sudah dihapus (soft delete).
         // Admin Keuangan hanya lihat yang masih aktif (default query Eloquent
         // otomatis exclude yang soft-deleted).
-        $query = $isSuperAdmin ? AkunReferensi::withTrashed() : AkunReferensi::query();
+        $query = AkunReferensi::query()->whereNull('deleted_at');
 
         $akunList = $query
             ->with(['creator:id,name', 'updater:id,name', 'deleter:id,name'])
@@ -115,11 +115,12 @@ class AkunReferensiController extends Controller
             'aksi' => 'ditambahkan',
         ]);
 
-        return back()->with('success', 'Akun berhasil ditambahkan.');
+        return to_route('finance.akun-referensi')->with('success', 'Akun berhasil ditambahkan.');
     }
 
-    public function update(StoreAkunReferensiRequest $request, AkunReferensi $akunReferensi)
+    public function update(StoreAkunReferensiRequest $request, $akunReferensi)
     {
+        $akunReferensi = AkunReferensi::withTrashed()->findOrFail($akunReferensi);
         $before = $akunReferensi->only(['kode_akun', 'nama_akun', 'kategori']);
 
         $akunReferensi->update([
@@ -137,11 +138,17 @@ class AkunReferensiController extends Controller
             ],
         ]);
 
-        return back()->with('success', 'Akun berhasil diperbarui.');
+        return to_route('finance.akun-referensi')->with('success', 'Akun berhasil diperbarui.');
     }
 
-    public function destroy(AkunReferensi $akunReferensi)
+    public function destroy($akunReferensi)
     {
+        $akunReferensi = AkunReferensi::withTrashed()->findOrFail($akunReferensi);
+
+        if ($akunReferensi->trashed()) {
+            return to_route('finance.akun-referensi')->with('info', 'Akun ini sudah dihapus sebelumnya.');
+        }
+
         $akunReferensi->update(['deleted_by' => Auth::id()]);
         $akunReferensi->delete();
 
@@ -151,6 +158,6 @@ class AkunReferensiController extends Controller
             'aksi' => 'dihapus',
         ]);
 
-        return back()->with('success', 'Akun berhasil dihapus.');
+        return to_route('finance.akun-referensi')->with('success', 'Akun berhasil dihapus.');
     }
 }
