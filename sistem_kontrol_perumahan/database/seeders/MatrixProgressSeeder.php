@@ -76,8 +76,8 @@ class MatrixProgressSeeder extends Seeder
 
     // Material yang lebih sensitif terhadap overuse (default lain: 1.10 / 1.30)
     private array $customThreshold = [
-        'MT001' => ['warning' => 1.00, 'boros' => 1.15], // Semen
-        'MT004' => ['warning' => 1.05, 'boros' => 1.20], // Bata Bolong
+        'MT001' => ['warning' => 1.10, 'boros' => 1.30], // Semen
+        'MT004' => ['warning' => 1.10, 'boros' => 1.30], // Bata Bolong
     ];
 
     public function run(): void
