@@ -2,9 +2,10 @@
   Simpan di: resources/js/Pages/Finance/Hpp/Index.jsx
   Sesuaikan path import AppLayout kalau lokasi layout kamu berbeda.
 */}
+import { useEffect, useMemo, useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
-import { ReceiptText, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, ReceiptText, TrendingUp } from "lucide-react";
 
 const rupiah = (n) =>
   new Intl.NumberFormat("id-ID", {
@@ -36,8 +37,30 @@ function Kpi({ label, value, meta, icon, tone = "primary" }) {
   );
 }
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
 export default function Index({ rows = [], summary = {} }) {
   const { total_proyek = 0, rata_rata = 0, unit_tertinggi = null } = summary;
+  const dataRows = Array.isArray(rows) ? rows : [];
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(dataRows.length / pageSize));
+  const paginatedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return dataRows.slice(start, start + pageSize);
+  }, [dataRows, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [pageSize]);
+
+  useEffect(() => {
+    setPage((currentPage) => Math.min(currentPage, totalPages));
+  }, [totalPages]);
+
+  const rangeStart = dataRows.length === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, dataRows.length);
 
   return (
     <AuthenticatedLayout
@@ -76,6 +99,20 @@ export default function Index({ rows = [], summary = {} }) {
         <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
             <h2 className="font-bold">Rekap HPP per Unit</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                title="Baris per halaman"
+                className="rounded-xl border border-border bg-white px-3 py-2 text-xs outline-none focus:border-primary"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size} / halaman
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[780px] text-sm">
@@ -89,8 +126,8 @@ export default function Index({ rows = [], summary = {} }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.length ? (
-                  rows.map((row) => (
+                {paginatedRows.length ? (
+                  paginatedRows.map((row) => (
                     <tr key={row.id} className="border-t border-border">
                       <td className="px-5 py-3 font-mono font-bold text-primary">{row.nama_unit}</td>
                       <td className="px-5 py-3 text-xs">Zona {row.zona}</td>
@@ -108,7 +145,7 @@ export default function Index({ rows = [], summary = {} }) {
                   </tr>
                 )}
               </tbody>
-              {rows.length > 0 && (
+              {dataRows.length > 0 && (
                 <tfoot className="border-t border-border bg-muted/70">
                   <tr>
                     <td colSpan={5} className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wider">
@@ -120,6 +157,34 @@ export default function Index({ rows = [], summary = {} }) {
               )}
             </table>
           </div>
+          {dataRows.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3 text-xs text-muted-foreground">
+              <span>
+                Menampilkan {rangeStart}–{rangeEnd} dari {dataRows.length} data
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+                  disabled={page <= 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="font-semibold text-foreground">
+                  Halaman {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
+                  disabled={page >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border disabled:opacity-40 hover:bg-secondary/50"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </AuthenticatedLayout>
