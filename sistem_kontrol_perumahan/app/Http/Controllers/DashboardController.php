@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Unit;
 use App\Models\MatrixProgress;
 use App\Models\LogKeluarHarian;
+use App\Models\LogMasukGudang;
 use App\Services\StokGudangService;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -20,6 +21,89 @@ class DashboardController extends Controller
         $pengeluaranBulanIni = LogKeluarHarian::whereMonth('tanggal', $bulanIni->month)
             ->whereYear('tanggal', $bulanIni->year)
             ->sum('total');
+
+        $penerimaanBulanIni = LogMasukGudang::whereMonth('tanggal', $bulanIni->month)
+            ->whereYear('tanggal', $bulanIni->year)
+            ->sum('total_harga');
+
+        $saldoBulanIni = $penerimaanBulanIni - $pengeluaranBulanIni;
+
+        $currentWeekStart = Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $currentWeekEnd = Carbon::now()->endOfWeek(Carbon::MONDAY);
+        $periodeMinggu = sprintf(
+            '%s - %s %s',
+            $currentWeekStart->translatedFormat('d M'),
+            $currentWeekEnd->translatedFormat('d M'),
+            $currentWeekEnd->year,
+        );
+
+        $startOfMonth = $bulanIni->copy()->startOfMonth();
+        $endOfMonth = $bulanIni->copy()->endOfMonth();
+
+        $masukPerWeek = LogMasukGudang::whereBetween('tanggal', [$startOfMonth, $endOfMonth])
+            ->get(['tanggal', 'total_harga'])
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->tanggal)
+                    ->startOfWeek(Carbon::MONDAY)
+                    ->format('Y-m-d');
+            })
+            ->map(function ($items) {
+                return $items->sum(fn ($item) => (float) $item->total_harga);
+            })
+            ->toArray();
+
+        $keluarPerWeek = LogKeluarHarian::whereBetween('tanggal', [$startOfMonth, $endOfMonth])
+            ->get(['tanggal', 'total'])
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->tanggal)
+                    ->startOfWeek(Carbon::MONDAY)
+                    ->format('Y-m-d');
+            })
+            ->map(function ($items) {
+                return $items->sum(fn ($item) => (float) $item->total);
+            })
+            ->toArray();
+
+        $weekKeys = collect(array_keys($masukPerWeek))
+            ->merge(array_keys($keluarPerWeek))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        $cashflowWeekly = array_map(function ($weekStart) use ($masukPerWeek, $keluarPerWeek) {
+            $start = Carbon::parse($weekStart);
+            $end = $start->copy()->endOfWeek(Carbon::MONDAY);
+            $masuk = $masukPerWeek[$weekStart] ?? 0;
+            $keluar = $keluarPerWeek[$weekStart] ?? 0;
+
+            return [
+                'weekLabel' => sprintf(
+                    'Minggu %s (%s - %s)',
+                    $start->weekOfYear,
+                    $start->translatedFormat('d M'),
+                    $end->translatedFormat('d M'),
+                ),
+                'masuk' => $masuk,
+                'keluar' => $keluar,
+                'saldo' => $masuk - $keluar,
+            ];
+        }, $weekKeys);
+
+        $topPengeluaran = LogKeluarHarian::query()
+            ->selectRaw('material_id, SUM(total) as total_pengeluaran')
+            ->with('material')
+            ->groupBy('material_id')
+            ->orderByDesc('total_pengeluaran')
+            ->take(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'nama' => $item->material?->nama ?? 'Tidak diketahui',
+                    'total' => (float) $item->total_pengeluaran,
+                ];
+            })
+            ->all();
 
         $units = Unit::with(['latestProgress',])->get();
 
@@ -131,11 +215,20 @@ class DashboardController extends Controller
                 'unitWarning'         => $unitWarning,
                 'unitBoros'           => $unitBoros,
                 'pengeluaranBulanIni' => (float) $pengeluaranBulanIni,
+                'penerimaanBulanIni'  => (float) $penerimaanBulanIni,
+                'saldoBulanIni'       => (float) $saldoBulanIni,
+                'totalModalMasuk'     => (float) $penerimaanBulanIni,
+                'totalPengeluaran'    => (float) $pengeluaranBulanIni,
+                'saldoKas'            => (float) $saldoBulanIni,
+                'nilaiMaterialMasuk'  => (float) $penerimaanBulanIni,
+                'periodeMinggu'       => $periodeMinggu,
             ],
-            'rows'       => $rows,
-            'monitoring' => $monitoring,
+            'rows'           => $rows,
+            'monitoring'     => $monitoring,
+            'cashflowWeekly' => $cashflowWeekly,
+            'topPengeluaran' => $topPengeluaran,
             // provide full stok data so the frontend can sort by harga or stok
-            'stokGudang' => $this->stokService->getStokGudang(),
+            'stokGudang'     => $this->stokService->getStokGudang(),
         ]);
     }
 }

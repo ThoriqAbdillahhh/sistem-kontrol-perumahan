@@ -1,15 +1,14 @@
 import React, { useState } from "react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 import {
     Building2,
     Check,
-    AlertTriangle,
-    AlertCircle,
     ClipboardList,
     TrendingUp,
     Search,
+    ChevronDown,
 } from "lucide-react";
 
 function StatusBadge({ value }) {
@@ -33,14 +32,8 @@ function StatusBadge({ value }) {
     );
 }
 
-function formatRupiahJt(value) {
-    const jt = value / 1_000_000;
-    return `Rp ${jt.toLocaleString("id-ID", { maximumFractionDigits: 0 })} Jt`;
-}
-
 const STOK_LIMIT = 5;
 
-// Pastikan progress dibatasi 0-100 supaya style width tidak "meledak"
 function clampProgress(v) {
     if (typeof v !== "number" || Number.isNaN(v)) return 0;
     return Math.min(100, Math.max(0, v));
@@ -53,29 +46,34 @@ function progressBarColor(statusMaterial) {
     return "bg-emerald-500";
 }
 
-export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
+export default function Dashboard({ kpi, rows, monitoring, stokGudang, cashflowWeekly = [], topPengeluaran = [] }) {
     const [stokQuery, setStokQuery] = useState("");
     const [stokVisible, setStokVisible] = useState(STOK_LIMIT);
-
-    const [stokSortBy, setStokSortBy] = useState(''); // 'harga' | 'stok' | ''
-    const [stokSortDir, setStokSortDir] = useState('desc'); // 'asc' | 'desc'
-
+    const [stokSortBy, setStokSortBy] = useState('');
+    const [stokSortDir, setStokSortDir] = useState('desc');
     const [unitQuery, setUnitQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("Semua Status");
+    const [expandedUnitId, setExpandedUnitId] = useState(null);
 
-    // Normalize server payload: some fields come as snake_case (sisa_stok, harga_satuan).
-    // Create camel-case aliases used by the component (`sisaStok`, `persen`).
+    function formatRupiah(value) {
+        const rounded = Number(value) || 0;
+        return rounded.toLocaleString("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        });
+    }
+
     const normalizedStok = (stokGudang ?? []).map((s) => {
-        const totalMasuk = Number(s.total_masuk ?? s.totalMasuk ?? 0) || 1;
+        const totalMasuk = Number(s.total_masuk ?? s.totalMasuk ?? 1) || 1;
         const sisa = Number(s.sisa_stok ?? s.sisaStok ?? 0);
         const persen = Math.min(100, Math.round((sisa / totalMasuk) * 100));
 
         return {
             ...s,
-            // keep original snake_case values for sorting where used elsewhere
             sisa_stok: s.sisa_stok ?? s.sisaStok ?? 0,
             harga_satuan: s.harga_satuan ?? s.hargaSatuan ?? s.harga ?? 0,
-            // component-friendly aliases
             sisaStok: sisa,
             persen,
             nama: s.nama ?? s.Nama ?? "",
@@ -88,7 +86,6 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
             if (!stokSortBy) return 0;
             const dir = stokSortDir === 'asc' ? 1 : -1;
             if (stokSortBy === 'harga') {
-                // Sort by total rupiah value shown in UI (`nilai_rupiah`) so order matches displayed currency
                 return (Number(a.nilai_rupiah ?? a.harga_satuan ?? 0) - Number(b.nilai_rupiah ?? b.harga_satuan ?? 0)) * dir;
             }
             if (stokSortBy === 'stok') {
@@ -100,9 +97,6 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
     const visibleStok = filteredStok.slice(0, stokVisible);
     const hasMore = filteredStok.length > stokVisible;
 
-    const [expandedUnitId, setExpandedUnitId] = useState(null);
-
-    // Filter tabel "Progres Unit" berdasarkan search + status
     const filteredRows = rows.filter((row) => {
         const q = unitQuery.toLowerCase();
         const matchesQuery =
@@ -120,332 +114,184 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
     });
 
     const statusOptions = [
-    "Semua Status",
-    "Aktif",
-    "Non-aktif",
-    "Aman",
-    "Warning",
-    "Boros",
-    "Selesai",
-];
+        "Semua Status",
+        "Aktif",
+        "Non-aktif",
+        "Aman",
+        "Warning",
+        "Boros",
+        "Selesai",
+    ];
 
     const cards = [
         {
-            title: "Total Unit",
-            value: `${kpi.totalUnit} Unit`,
-            meta: "Seluruh unit terdaftar",
+            title: "Total Modal Masuk",
+            value: formatRupiah(kpi.totalModalMasuk ?? 0),
+            meta: "Total penerimaan kas masuk proyek",
             icon: <Building2 size={18} />,
         },
         {
-            title: "Unit Sudah Diinput",
-            value: `${kpi.unitDiinput} Unit`,
-            meta: `dari ${kpi.totalUnit} unit`,
-            icon: <ClipboardList size={18} />,
-        },
-        {
-            title: "Unit Aktif",
-            value: `${kpi.unitAktif} Unit`,
-            meta: `${kpi.totalUnit} total unit`,
-            icon: <Building2 size={18} />,
-        },
-        {
-            title: "Unit Selesai",
-            value: `${kpi.unitSelesai} Unit`,
-            meta: "Progress 100%",
-            icon: <Check size={18} />,
-            tone: "up",
-        },
-        {
-            title: "Unit Warning",
-            value: `${kpi.unitWarning} Unit`,
-            meta: "Mendekati batas standar",
-            icon: <AlertCircle size={18} />,
-            tone: "warn",
-        },
-        {
-            title: "Unit Boros Material",
-            value: `${kpi.unitBoros} Unit`,
-            meta: "Pemakaian over standar",
-            icon: <AlertTriangle size={18} />,
-            tone: "down",
-        },
-        {
-            title: "Pengeluaran Bulan Ini",
-            value: formatRupiahJt(kpi.pengeluaranBulanIni),
-            meta: "Log keluar gudang bulan berjalan",
+            title: "Total Pengeluaran",
+            value: formatRupiah(kpi.totalPengeluaran ?? 0),
+            meta: "Total biaya keluar proyek",
             icon: <TrendingUp size={18} />,
             tone: "down",
         },
+        {
+            title: "Saldo Kas",
+            value: formatRupiah(kpi.saldoKas ?? 0),
+            meta: "Saldo kas minggu ini",
+            icon: <Check size={18} />,
+            tone: kpi.saldoKas >= 0 ? "up" : "down",
+        },
+        {
+            title: "Nilai Material Masuk",
+            value: formatRupiah(kpi.nilaiMaterialMasuk ?? 0),
+            meta: "Nilai pembelian material masuk",
+            icon: <ClipboardList size={18} />,
+        },
     ];
+
+    const maxCashflow = Math.max(
+        1,
+        ...(cashflowWeekly || []).flatMap((item) => [item.masuk ?? 0, item.keluar ?? 0]),
+    );
 
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />
 
             <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {cards.map((c) => (
-                        <div
-                            key={c.title}
-                            className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+                <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold">Ringkasan Keuangan Proyek</h1>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Cashflow mingguan & aktivitas kas.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-2 rounded-2xl border border-border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm"
                         >
-                            <div className="flex items-start justify-between">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    {c.title}
+                            {kpi.periodeMinggu ?? "Periode minggu ini"}
+                            <ChevronDown size={16} />
+                        </button>
+                    </div>
+
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        {cards.map((c) => (
+                            <div key={c.title} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                            {c.title}
+                                        </p>
+                                        <p className="mt-4 text-3xl font-extrabold tracking-tight">
+                                            {c.value}
+                                        </p>
+                                    </div>
+                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-900">
+                                        {c.icon}
+                                    </span>
+                                </div>
+                                <p className={`mt-3 text-xs ${c.tone === "up" ? "text-emerald-600" : c.tone === "down" ? "text-red-500" : "text-muted-foreground"}`}>
+                                    {c.meta}
                                 </p>
-                                <span className="text-primary/70">
-                                    {c.icon}
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <div className="grid gap-5 xl:grid-cols-[1.8fr_minmax(320px,1fr)]">
+                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                        <div className="flex flex-col gap-4 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="font-bold">Tren Cashflow Mingguan</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Grafik perbandingan kas masuk dan kas keluar setiap minggu.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Masuk
+                                </span>
+                                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                                    <span className="h-2.5 w-2.5 rounded-full bg-red-500" /> Keluar
                                 </span>
                             </div>
-                            <p className="mt-3 text-3xl font-extrabold">
-                                {c.value}
-                            </p>
-                            <p
-                                className={`mt-1 text-xs ${
-                                    c.tone === "up"
-                                        ? "text-emerald-600"
-                                        : c.tone === "warn"
-                                          ? "text-amber-500"
-                                          : c.tone === "down"
-                                            ? "text-red-500"
-                                            : "text-muted-foreground"
-                                }`}
-                            >
-                                {c.meta}
-                            </p>
                         </div>
-                    ))}
-                </div>
 
-                <div className="grid gap-5 xl:grid-cols-[1fr_270px]">
-                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-                            <h2 className="font-bold">
-                                Progres Unit — Operasional
-                            </h2>
-
-                            <div className="flex flex-wrap items-center gap-2">
-                                <div className="relative">
-                                    <Search
-                                        size={13}
-                                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Cari unit, zona, tukang..."
-                                        value={unitQuery}
-                                        onChange={(e) =>
-                                            setUnitQuery(e.target.value)
-                                        }
-                                        className="w-56 rounded-lg border border-border bg-white py-1.5 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                                    />
-                                </div>
-
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) =>
-                                        setStatusFilter(e.target.value)
-                                    }
-                                    className="rounded-lg border border-border bg-white py-1.5 px-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-                                >
-                                    {statusOptions.map((opt) => (
-                                        <option key={opt} value={opt}>
-                                            {opt}
-                                        </option>
+                        <div className="space-y-4 px-5 py-5">
+                            {(cashflowWeekly || []).length > 0 ? (
+                                <div className="space-y-3">
+                                    {cashflowWeekly.map((week) => (
+                                        <div key={week.weekLabel} className="space-y-2 rounded-2xl border border-border bg-white p-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <p className="text-sm font-semibold text-slate-900">{week.weekLabel}</p>
+                                                <p className="text-xs text-muted-foreground">Saldo {formatRupiah(week.saldo)}</p>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                                        <span>Masuk</span>
+                                                        <span>{formatRupiah(week.masuk)}</span>
+                                                    </div>
+                                                    <div className="h-2.5 rounded-full bg-slate-100">
+                                                        <div
+                                                            className="h-2.5 rounded-full bg-emerald-500"
+                                                            style={{ width: `${Math.round((week.masuk / maxCashflow) * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                                        <span>Keluar</span>
+                                                        <span>{formatRupiah(week.keluar)}</span>
+                                                    </div>
+                                                    <div className="h-2.5 rounded-full bg-slate-100">
+                                                        <div
+                                                            className="h-2.5 rounded-full bg-red-500"
+                                                            style={{ width: `${Math.round((week.keluar / maxCashflow) * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ))}
-                                </select>
-                            </div>
+                                </div>
+                            ) : (
+                                <div className="rounded-2xl border border-dashed border-border bg-slate-50 p-6 text-center text-sm text-muted-foreground">
+                                    Belum ada data cashflow mingguan.
+                                </div>
+                            )}
                         </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[600px] text-sm">
-                                <thead className="bg-muted text-xs uppercase tracking-wider text-muted-foreground">
+                        <div className="overflow-x-auto border-t border-border px-5 pb-5">
+                            <table className="w-full min-w-[640px] text-sm">
+                                <thead className="bg-slate-50 text-xs uppercase tracking-wider text-muted-foreground">
                                     <tr>
-                                        {[
-                                            "Unit",
-                                            "Zona",
-                                            "Tukang",
-                                            "Progress",
-                                            "Status Unit",
-                                            "Status Material",
-                                        ].map((h) => (
-                                            <th
-                                                key={h}
-                                                className="px-4 py-3 text-left font-semibold"
-                                            >
-                                                {h}
-                                            </th>
-                                        ))}
+                                        <th className="px-4 py-3 text-left font-semibold">Minggu</th>
+                                        <th className="px-4 py-3 text-left font-semibold">Masuk</th>
+                                        <th className="px-4 py-3 text-left font-semibold">Keluar</th>
+                                        <th className="px-4 py-3 text-left font-semibold">Saldo</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredRows.map((row) => {
-                                        const progress = clampProgress(
-                                            row.progress,
-                                        );
-
-                                        return (
-                                            <React.Fragment key={row.id}>
-                                                <tr className="border-t border-border hover:bg-secondary/50">
-                                                    <td className="px-4 py-3 font-bold font-mono text-primary">
-                                                        {row.nama_unit}
-                                                    </td>
-
-                                                    <td className="px-4 py-3 text-xs">
-                                                        {row.zona}
-                                                    </td>
-
-                                                    <td className="px-4 py-3 text-xs">
-                                                        {row.tukang}
-                                                    </td>
-
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-1.5 w-20 rounded-full bg-secondary overflow-hidden">
-                                                                {progress >
-                                                                    0 && (
-                                                                    <div
-                                                                        className={`h-1.5 rounded-full ${progressBarColor(
-                                                                            row.statusMaterial,
-                                                                        )}`}
-                                                                        style={{
-                                                                            width: `${progress}%`,
-                                                                        }}
-                                                                    />
-                                                                )}
-                                                            </div>
-
-                                                            <span className="font-mono text-xs">
-                                                                {progress}%
-                                                            </span>
-                                                        </div>
-                                                    </td>
-
-                                                    <td className="px-4 py-3">
-                                                        <span
-                                                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
-                                                                row.status ===
-                                                                "Aktif"
-                                                                    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                                                                    : "bg-slate-100 text-slate-500 ring-slate-200"
-                                                            }`}
-                                                        >
-                                                            {row.status}
-                                                        </span>
-                                                    </td>
-
-                                                    <td className="px-4 py-3">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setExpandedUnitId(
-                                                                    expandedUnitId ===
-                                                                        row.id
-                                                                        ? null
-                                                                        : row.id,
-                                                                )
-                                                            }
-                                                            className="cursor-pointer"
-                                                        >
-                                                            <StatusBadge
-                                                                value={
-                                                                    row.statusMaterial
-                                                                }
-                                                            />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-
-                                                {expandedUnitId === row.id && (
-                                                    <tr>
-                                                        <td
-                                                            colSpan={6}
-                                                            className="bg-slate-50 px-4 py-4"
-                                                        >
-                                                            <table className="w-full text-xs">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th className="pb-2 text-left font-semibold">
-                                                                            Material
-                                                                        </th>
-
-                                                                        <th className="pb-2 text-left font-semibold">
-                                                                            Standar
-                                                                        </th>
-
-                                                                        <th className="pb-2 text-left font-semibold">
-                                                                            Aktual
-                                                                        </th>
-
-                                                                        <th className="pb-2 text-left font-semibold">
-                                                                            Status
-                                                                        </th>
-                                                                    </tr>
-                                                                </thead>
-
-                                                                <tbody>
-                                                                    {(
-                                                                        monitoring[
-                                                                            row
-                                                                                .id
-                                                                        ] ?? []
-                                                                    ).map(
-                                                                        (
-                                                                            item,
-                                                                            i,
-                                                                        ) => (
-                                                                            <tr
-                                                                                key={
-                                                                                    i
-                                                                                }
-                                                                                className="border-t border-slate-200"
-                                                                            >
-                                                                                <td className="py-2">
-                                                                                    {
-                                                                                        item.nama_material
-                                                                                    }
-                                                                                </td>
-
-                                                                                <td className="py-2">
-                                                                                    {
-                                                                                        item.standar
-                                                                                    }
-                                                                                </td>
-
-                                                                                <td className="py-2">
-                                                                                    {
-                                                                                        item.aktual
-                                                                                    }
-                                                                                </td>
-
-                                                                                <td className="py-2">
-                                                                                    <StatusBadge
-                                                                                        value={
-                                                                                            item.analisa
-                                                                                        }
-                                                                                    />
-                                                                                </td>
-                                                                            </tr>
-                                                                        ),
-                                                                    )}
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                    {filteredRows.length === 0 && (
+                                    {(cashflowWeekly || []).map((week) => (
+                                        <tr key={week.weekLabel} className="border-t border-border hover:bg-slate-50">
+                                            <td className="px-4 py-3 font-semibold text-slate-900">{week.weekLabel}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-700">{formatRupiah(week.masuk)}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-700">{formatRupiah(week.keluar)}</td>
+                                            <td className="px-4 py-3 text-xs font-semibold text-slate-900">{formatRupiah(week.saldo)}</td>
+                                        </tr>
+                                    ))}
+                                    {(cashflowWeekly || []).length === 0 && (
                                         <tr>
-                                            <td
-                                                colSpan={6}
-                                                className="px-4 py-8 text-center text-sm text-muted-foreground"
-                                            >
-                                                {unitQuery ||
-                                                statusFilter !== "Semua Status"
-                                                    ? "Tidak ada unit yang cocok dengan filter."
-                                                    : "Belum ada data unit."}
+                                            <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                                                Tidak ada data minggu ini.
                                             </td>
                                         </tr>
                                     )}
@@ -454,126 +300,127 @@ export default function Dashboard({ kpi, rows, monitoring, stokGudang }) {
                         </div>
                     </div>
 
-                    <div className="space-y-2.5">
-                        <div className="flex items-center justify-between gap-2">
-                            <p className="font-bold">Stok Gudang</p>
-
-                            <div className="relative">
-                                <Search
-                                    size={13}
-                                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Cari material…"
-                                    value={stokQuery}
-                                    onChange={(e) => {
-                                        setStokQuery(e.target.value);
-                                        setStokVisible(STOK_LIMIT);
-                                    }}
-                                    className="w-40 rounded-lg border border-border bg-white py-1 pl-7 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                                />
+                    <div className="space-y-5">
+                        <div className="overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="font-bold">Akun Pengeluaran Terbesar</h3>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Ringkasan akun material dengan pengeluaran tertinggi.
+                                    </p>
+                                </div>
                             </div>
 
-                            {/* Filters: place below the title and search as requested */}
-                            <div className="mt-2 flex items-center gap-2">
-                                <select
-                                    value={stokSortBy}
-                                    onChange={(e) => setStokSortBy(e.target.value)}
-                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
-                                >
-                                    <option value="">Urutkan</option>
-                                    <option value="harga">Harga</option>
-                                    <option value="stok">Stok</option>
-                                </select>
-
-                                <select
-                                    value={stokSortDir}
-                                    onChange={(e) => setStokSortDir(e.target.value)}
-                                    className="rounded-lg border border-border bg-white py-1 pl-3 pr-2 text-xs focus:outline-none"
-                                >
-                                    <option value="desc">Desc</option>
-                                    <option value="asc">Asc</option>
-                                </select>
-
-                                {/* dynamic direction hint matching the dir select */}
-                                <span className="text-xs text-muted-foreground ml-2">
-                                    {stokSortBy === 'harga' && (
-                                        stokSortDir === 'desc'
-                                            ? '(besar → kecil)'
-                                            : '(kecil → besar)'
-                                    )}
-                                    {stokSortBy === 'stok' && (
-                                        stokSortDir === 'desc'
-                                            ? '(banyak → sedikit)'
-                                            : '(sedikit → banyak)'
-                                    )}
-                                </span>
+                            <div className="mt-5 space-y-4">
+                                {topPengeluaran.length ? (
+                                    topPengeluaran.map((item) => (
+                                        <div key={item.nama} className="rounded-2xl border border-border bg-white p-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <p className="font-semibold text-slate-900">{item.nama}</p>
+                                                <p className="text-xs font-semibold text-slate-700">
+                                                    {formatRupiah(item.total)}
+                                                </p>
+                                            </div>
+                                            <div className="mt-3 h-2.5 rounded-full bg-slate-100">
+                                                <div
+                                                    className="h-2.5 rounded-full bg-emerald-500"
+                                                    style={{ width: `${Math.min(100, Math.round((item.total / maxCashflow) * 100))}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="rounded-2xl border border-dashed border-border bg-slate-50 p-6 text-center text-sm text-muted-foreground">
+                                        Belum ada data pengeluaran material.
+                                    </div>
+                                )}
                             </div>
-                        </div>
 
-                        {visibleStok.map((s) => (
-                            <div
-                                key={s.nama}
-                                className="rounded-xl border border-border bg-white p-3"
+                            <button
+                                type="button"
+                                className="mt-6 w-full rounded-2xl border border-border bg-white py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                             >
-                                <div className="flex justify-between text-sm">
-                                    <span className="font-semibold">
-                                        {s.nama}
-                                    </span>
-                                    <span className="font-mono text-xs font-bold">
-                                        {s.sisaStok.toLocaleString("id-ID")}
-                                    </span>
-                                </div>
-                                <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
-                                    {s.persen > 0 && (
-                                        <div
-                                            className={`h-1.5 rounded-full ${
-                                                s.persen > 50
-                                                    ? "bg-emerald-500"
-                                                    : s.persen > 25
-                                                      ? "bg-amber-400"
-                                                      : "bg-red-500"
-                                            }`}
-                                            style={{ width: `${s.persen}%` }}
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-
-                        <div className="flex gap-2">
-                            {hasMore && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setStokVisible((v) => v + STOK_LIMIT)
-                                    }
-                                    className="flex-1 rounded-xl border border-border py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
-                                >
-                                    Tampilkan lainnya (
-                                    {filteredStok.length - stokVisible} item)
-                                </button>
-                            )}
-
-                            {stokVisible > STOK_LIMIT && (
-                                <button
-                                    type="button"
-                                    onClick={() => setStokVisible(STOK_LIMIT)}
-                                    className="flex-1 rounded-xl border border-border py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary"
-                                >
-                                    Sembunyikan
-                                </button>
-                            )}
+                                Tampilkan lainnya
+                            </button>
                         </div>
 
-                        {filteredStok.length === 0 && (
-                            <p className="text-xs text-muted-foreground">
-                                {stokQuery
-                                    ? `Tidak ada hasil untuk "${stokQuery}".`
-                                    : "Belum ada data stok gudang."}
-                            </p>
-                        )}
+                        <div className="overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm">
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="font-bold">Stok Gudang</p>
+                                <div className="relative">
+                                    <Search
+                                        size={13}
+                                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Cari material…"
+                                        value={stokQuery}
+                                        onChange={(e) => {
+                                            setStokQuery(e.target.value);
+                                            setStokVisible(STOK_LIMIT);
+                                        }}
+                                        className="w-40 rounded-2xl border border-border bg-white py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mt-5 space-y-3">
+                                {visibleStok.map((s) => (
+                                    <div key={s.nama} className="rounded-2xl border border-border bg-white p-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-semibold">{s.nama}</span>
+                                            <span className="font-mono text-xs font-bold text-slate-700">
+                                                {s.sisaStok.toLocaleString("id-ID")}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                            {s.persen > 0 && (
+                                                <div
+                                                    className={`h-1.5 rounded-full ${
+                                                        s.persen > 50
+                                                            ? "bg-emerald-500"
+                                                            : s.persen > 25
+                                                                ? "bg-amber-400"
+                                                                : "bg-red-500"
+                                                    }`}
+                                                    style={{ width: `${s.persen}%` }}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <div className="grid gap-2">
+                                    {hasMore && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setStokVisible((v) => v + STOK_LIMIT)}
+                                            className="rounded-2xl border border-border bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                        >
+                                            Tampilkan lainnya ({filteredStok.length - stokVisible} item)
+                                        </button>
+                                    )}
+                                    {stokVisible > STOK_LIMIT && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setStokVisible(STOK_LIMIT)}
+                                            className="rounded-2xl border border-border bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                        >
+                                            Sembunyikan
+                                        </button>
+                                    )}
+                                </div>
+
+                                {filteredStok.length === 0 && (
+                                    <p className="text-xs text-muted-foreground">
+                                        {stokQuery
+                                            ? `Tidak ada hasil untuk "${stokQuery}".`
+                                            : "Belum ada data stok gudang."}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
