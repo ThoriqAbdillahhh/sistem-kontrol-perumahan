@@ -13,8 +13,8 @@ class KasKeluarService
     public function create(array $data, ?UploadedFile $lampiran = null): KasKeluar
     {
         return DB::transaction(function () use ($data, $lampiran) {
-            $qty = (float) $data['qty'];
-            $nominalPerUnit = (float) $data['nominal_per_unit'];
+            $qty = (float) ($data['qty'] ?? 1);
+            $nominalPerUnit = (float) ($data['nominal_per_unit'] ?? $data['nominal'] ?? 0);
 
             $lampiranPath = null;
             if ($lampiran) {
@@ -31,8 +31,8 @@ class KasKeluarService
                 'satuan' => $data['satuan'] ?? null,
                 'nominal_per_unit' => $nominalPerUnit,
                 'total' => $qty * $nominalPerUnit,
-                'metode_bayar' => $data['metode_bayar'],
-                'penerima' => $data['penerima'] ?? null,
+                'metode_bayar' => $data['metode_bayar'] ?? 'transfer',
+                'penerima' => $data['penerima'] ?? $data['no_spj'] ?? null,
                 'lampiran_path' => $lampiranPath,
                 'created_by' => Auth::id(),
             ]);

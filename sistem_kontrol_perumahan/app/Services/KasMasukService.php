@@ -19,7 +19,7 @@ class KasMasukService
                 'akun_referensi_id' => $data['akun_referensi_id'],
                 'keterangan' => $data['keterangan'] ?? null,
                 'nominal' => $data['nominal'],
-                'dari' => $data['dari'],
+                'dari' => $data['dari'] ?? 'Tidak disebutkan',
                 'untuk' => $data['untuk'] ?? 'Kas Proyek EstateControl',
                 'minggu_ke' => (int) $tanggal->format('W'),
                 'created_by' => Auth::id(),
