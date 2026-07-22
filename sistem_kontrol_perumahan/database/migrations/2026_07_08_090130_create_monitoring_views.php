@@ -16,8 +16,10 @@ return new class extends Migration
         |--------------------------------------------------------------------------
         */
 
+        DB::statement("DROP VIEW IF EXISTS v_stok_gudang;");
+
         DB::statement("
-            CREATE OR REPLACE VIEW v_stok_gudang AS
+            CREATE VIEW v_stok_gudang AS
             SELECT
                 m.id AS material_id,
                 m.kode_material,
@@ -51,8 +53,10 @@ return new class extends Migration
         |--------------------------------------------------------------------------
         */
 
+        DB::statement("DROP VIEW IF EXISTS v_monitoring_progress;");
+
         DB::statement("
-            CREATE OR REPLACE VIEW v_monitoring_progress AS
+            CREATE VIEW v_monitoring_progress AS
 
             SELECT
 
