@@ -1,18 +1,18 @@
-import { Link, router, usePage } from "@inertiajs/react";
-import {
-    Home,
-    Building2,
-    Boxes,
-    TrendingUp,
-    ClipboardList,
-    Database,
-    Users,
-    LogOut,
-} from "lucide-react";
-import RoleBadge from "@/Components/RoleBadge";
-import ConfirmDialog from "@/Components/ConfirmDialog";
-import { useState } from "react";
-import logo from "@/assets/tabarok.jpg";    
+    import { Link, router, usePage } from "@inertiajs/react";
+    import {
+        Home,
+        Building2,
+        Boxes,
+        TrendingUp,
+        ClipboardList,
+        Database,
+        Users,
+        LogOut,
+    } from "lucide-react";
+    import RoleBadge from "@/Components/RoleBadge";
+    import ConfirmDialog from "@/Components/ConfirmDialog";
+    import { useState } from "react";
+    import logo from "@/assets/tabarok.jpg";    
 
 export default function Sidebar() {
     const { auth } = usePage().props;
@@ -36,7 +36,7 @@ export default function Sidebar() {
             title: "Dashboard",
             route: "dashboard",
             icon: Home,
-            roles: ["Super Admin", "Admin", "Owner"],
+            roles: ["Super Admin", "Admin", "Owner", "Admin Keuangan"],
         },
         {
             title: "Mengelola Unit",
@@ -77,7 +77,7 @@ export default function Sidebar() {
         },
     ];
 
-    const financeMenus = [
+    const financeMenus = [  
         {
             title: "Kartu Material Unit",
             route: "finance.kartu-material-unit",
@@ -122,10 +122,7 @@ export default function Sidebar() {
         },
     ];
 
-    const showMainMenu = role !== "Admin Keuangan";
-    const mainMenuItems = showMainMenu
-        ? menus.filter((menu) => menu.roles.includes(role))
-        : [];
+    const mainMenuItems = menus.filter((menu) => menu.roles.includes(role));
     const financeMenuItems = financeMenus.filter((menu) => menu.roles.includes(role));
 
     const initials = auth.user.name
@@ -148,7 +145,7 @@ export default function Sidebar() {
                 
             </div>
 
-            <nav className="flex-1 overflow-y-auto px-4 py-5">
+            <nav className="flex-1 space-y-0.5 overflow-y-auto scrollbar-hide p-3 text-sm">
                 <p className="mb-4 px-3 text-[11px] font-bold uppercase tracking-[0.25em] text-sidebar-foreground/40">
                     MENU
                 </p>
