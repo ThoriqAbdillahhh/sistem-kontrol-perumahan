@@ -32,7 +32,7 @@ export default function KasMasuk({ kasMasuk = [], totalBulanIni = 0, akunOptions
 
     function submit(e) {
         e.preventDefault();
-        post(route("keuangan.kasMasuk.store"), {
+        post(route("finance.kas-masuk.store"), {
             onSuccess: () => {
                 reset();
                 setShowForm(false);

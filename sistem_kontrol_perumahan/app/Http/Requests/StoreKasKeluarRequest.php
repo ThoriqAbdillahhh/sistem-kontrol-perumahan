@@ -11,6 +11,18 @@ class StoreKasKeluarRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'akun_referensi_id' => $this->input('akun_referensi_id', $this->input('akun_id')),
+            'unit' => $this->input('unit', $this->input('unit_id')),
+            'qty' => $this->input('qty', 1),
+            'nominal_per_unit' => $this->input('nominal_per_unit', $this->input('nominal', 0)),
+            'metode_bayar' => $this->input('metode_bayar', 'transfer'),
+            'penerima' => $this->input('penerima', $this->input('no_spj')),
+        ]);
+    }
+
     public function rules(): array
     {
         return [

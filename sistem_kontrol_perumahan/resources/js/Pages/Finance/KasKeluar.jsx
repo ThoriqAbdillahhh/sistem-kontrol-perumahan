@@ -37,7 +37,7 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
 
     function submit(e) {
         e.preventDefault();
-        post(route("keuangan.kasKeluar.store"), {
+        post(route("finance.kas-keluar.store"), {
             forceFormData: true, // wajib karena ada file upload
             onSuccess: () => {
                 reset();

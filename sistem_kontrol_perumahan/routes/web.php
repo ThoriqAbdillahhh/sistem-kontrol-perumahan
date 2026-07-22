@@ -94,10 +94,17 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('spj-otomatis', [SpjController::class, 'index'])->name('spj-otomatis');
+
     Route::get('kas-keluar', [KasKeluarController::class, 'index'])->name('kas-keluar');
     Route::post('kas-keluar', [KasKeluarController::class, 'store'])->name('kas-keluar.store');
+    Route::put('kas-keluar/{kasKeluar}', [KasKeluarController::class, 'update'])->name('kas-keluar.update');
+    Route::delete('kas-keluar/{kasKeluar}', [KasKeluarController::class, 'destroy'])->name('kas-keluar.destroy');
+
     Route::get('kas-masuk', [KasMasukController::class, 'index'])->name('kas-masuk');
     Route::post('kas-masuk', [KasMasukController::class, 'store'])->name('kas-masuk.store');
+    Route::put('kas-masuk/{kasMasuk}', [KasMasukController::class, 'update'])->name('kas-masuk.update');
+    Route::delete('kas-masuk/{kasMasuk}', [KasMasukController::class, 'destroy'])->name('kas-masuk.destroy');
+
     Route::get('akun-referensi', [AkunReferensiController::class, 'index'])
         ->name('akun-referensi');
     Route::post('akun-referensi', [AkunReferensiController::class, 'store'])
