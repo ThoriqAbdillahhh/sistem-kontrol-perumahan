@@ -60,10 +60,12 @@ function OperasionalContent({ kpiOperasional, rows, monitoring }) {
     });
 
     const cards = [
-        { title: "Total Unit", value: kpiOperasional.totalUnit, icon: <Building2 size={18} /> },
-        { title: "Unit Aktif", value: kpiOperasional.unitAktif, icon: <TrendingUp size={18} /> },
-        { title: "Unit Selesai", value: kpiOperasional.unitSelesai, icon: <CheckCircle size={18} /> },
-        { title: "Perlu Perhatian", value: kpiOperasional.unitWarning + kpiOperasional.unitBoros, icon: <AlertTriangle size={18} /> },
+        { title: "Total Unit", value: `${kpiOperasional.totalUnit ?? 0} Unit`, meta: "Seluruh unit terdaftar", icon: <Building2 size={18} /> },
+        { title: "Unit Sudah Diinput", value: `${kpiOperasional.unitDiinput ?? 0} Unit`, meta: "Sudah memiliki progress terinput", icon: <ClipboardList size={18} /> },
+        { title: "Unit Aktif", value: `${kpiOperasional.unitAktif ?? 0} Unit`, meta: "Status aktif saat ini", icon: <TrendingUp size={18} /> },
+        { title: "Unit Selesai", value: `${kpiOperasional.unitSelesai ?? 0} Unit`, meta: "Progress 100%", icon: <CheckCircle size={18} />, tone: "up" },
+        { title: "Unit Warning", value: `${kpiOperasional.unitWarning ?? 0} Unit`, meta: "Mendekati batas standar", icon: <AlertTriangle size={18} />, tone: "warn" },
+        { title: "Unit Boros Material", value: `${kpiOperasional.unitBoros ?? 0} Unit`, meta: "Pemakaian over standar", icon: <AlertTriangle size={18} />, tone: "down" },
     ];
 
     return (
@@ -80,6 +82,9 @@ function OperasionalContent({ kpiOperasional, rows, monitoring }) {
                                 {c.icon}
                             </span>
                         </div>
+                        <p className={`mt-3 text-xs ${c.tone === "up" ? "text-emerald-600" : c.tone === "warn" ? "text-amber-500" : c.tone === "down" ? "text-red-500" : "text-muted-foreground"}`}>
+                            {c.meta}
+                        </p>
                     </div>
                 ))}
             </div>
@@ -237,8 +242,9 @@ function KeuanganContent({ kpiKeuangan, stokGudang, cashflowWeekly = [], topPeng
     const cards = [
         { title: "Total Modal Masuk", value: formatRupiah(kpiKeuangan.totalModalMasuk ?? 0), meta: "Total penerimaan kas masuk proyek", icon: <Building2 size={18} /> },
         { title: "Total Pengeluaran", value: formatRupiah(kpiKeuangan.totalPengeluaran ?? 0), meta: "Total biaya keluar proyek", icon: <TrendingUp size={18} />, tone: "down" },
-        { title: "Saldo Kas", value: formatRupiah(kpiKeuangan.saldoKas ?? 0), meta: "Saldo kas minggu ini", icon: <Check size={18} />, tone: kpiKeuangan.saldoKas >= 0 ? "up" : "down" },
+        { title: "Saldo Kas", value: formatRupiah(kpiKeuangan.saldoKas ?? 0), meta: "Saldo kas bulan ini", icon: <Check size={18} />, tone: (kpiKeuangan.saldoKas ?? 0) >= 0 ? "up" : "down" },
         { title: "Nilai Material Masuk", value: formatRupiah(kpiKeuangan.nilaiMaterialMasuk ?? 0), meta: "Nilai pembelian material masuk", icon: <ClipboardList size={18} /> },
+        { title: "Pengeluaran Bulan Ini", value: formatRupiah(kpiKeuangan.pengeluaranBulanIni ?? 0), meta: "Log keluar gudang bulan berjalan", icon: <TrendingUp size={18} />, tone: "down" },
     ];
 
     const maxCashflow = Math.max(1, ...(cashflowWeekly || []).flatMap((item) => [item.masuk ?? 0, item.keluar ?? 0]));
