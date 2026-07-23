@@ -41,7 +41,6 @@ function formatRupiah(value) {
 function OperasionalContent({ kpiOperasional, rows, monitoring, stokGudang }) {
     const [unitQuery, setUnitQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("Semua Status");
-    const [expandedUnitId, setExpandedUnitId] = useState(null);
     const [stokQuery, setStokQuery] = useState("");
     const [stokVisible, setStokVisible] = useState(STOK_LIMIT);
     const [stokSortBy, setStokSortBy] = useState("");
@@ -129,7 +128,7 @@ function OperasionalContent({ kpiOperasional, rows, monitoring, stokGudang }) {
                 <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
                         <h2 className="font-bold">Monitoring Unit</h2>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             <div className="relative">
                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
@@ -162,7 +161,6 @@ function OperasionalContent({ kpiOperasional, rows, monitoring, stokGudang }) {
                                     <th className="px-4 py-3 text-left font-semibold">Progress</th>
                                     <th className="px-4 py-3 text-left font-semibold">Status Unit</th>
                                     <th className="px-4 py-3 text-left font-semibold">Status Material</th>
-                                    <th className="px-4 py-3 text-left font-semibold">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -185,48 +183,12 @@ function OperasionalContent({ kpiOperasional, rows, monitoring, stokGudang }) {
                                             </td>
                                             <td className="px-4 py-3"><StatusBadge value={row.status} /></td>
                                             <td className="px-4 py-3"><StatusBadge value={row.statusMaterial} /></td>
-                                            <td className="px-4 py-3">
-                                                {monitoring[row.id] && monitoring[row.id].length > 0 && (
-                                                    <button
-                                                        onClick={() => setExpandedUnitId(expandedUnitId === row.id ? null : row.id)}
-                                                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-400"
-                                                    >
-                                                        {expandedUnitId === row.id ? "Tutup" : "Detail"}
-                                                    </button>
-                                                )}
-                                            </td>
                                         </tr>
-                                        {expandedUnitId === row.id && (
-                                            <tr>
-                                                <td colSpan={7} className="bg-slate-50 px-4 py-4">
-                                                    <table className="w-full text-xs">
-                                                        <thead className="text-muted-foreground">
-                                                            <tr>
-                                                                <th className="pb-2 text-left font-semibold">Material</th>
-                                                                <th className="pb-2 text-left font-semibold">Standar</th>
-                                                                <th className="pb-2 text-left font-semibold">Aktual</th>
-                                                                <th className="pb-2 text-left font-semibold">Status</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {monitoring[row.id].map((m, i) => (
-                                                                <tr key={i} className="border-t border-border">
-                                                                    <td className="py-2 font-semibold">{m.nama_material}</td>
-                                                                    <td className="py-2 text-muted-foreground">{m.standar}</td>
-                                                                    <td className="py-2 text-muted-foreground">{m.aktual}</td>
-                                                                    <td className="py-2"><StatusBadge value={m.analisa} /></td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        )}
                                     </React.Fragment>
                                 ))}
                                 {filteredRows.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                                        <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                                             Tidak ada unit yang cocok.
                                         </td>
                                     </tr>
@@ -292,11 +254,11 @@ function OperasionalContent({ kpiOperasional, rows, monitoring, stokGudang }) {
                             ))}
                             <div className="grid gap-2">
                                 {hasMore && (
-                                    <button type="button" onClick={() => setStokVisible((v) => v + STOK_LIMIT)} className="rounded-2xl border border-border bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                                        Tampilkan lainnya ({filteredStok.length - stokVisible} item)
+                                    <button type="button" onClick={() => setStokVisible(filteredStok.length)} className="rounded-2xl border border-border bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                                        Lihat Selengkapnya
                                     </button>
                                 )}
-                                {stokVisible > STOK_LIMIT && (
+                                {stokVisible >= filteredStok.length && filteredStok.length > STOK_LIMIT && (
                                     <button type="button" onClick={() => setStokVisible(STOK_LIMIT)} className="rounded-2xl border border-border bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                                         Sembunyikan
                                     </button>
