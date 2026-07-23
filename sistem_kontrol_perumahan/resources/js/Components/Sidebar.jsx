@@ -14,6 +14,7 @@ import {
 import RoleBadge from "@/Components/RoleBadge";
 import ConfirmDialog from "@/Components/ConfirmDialog";
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import logo from "@/assets/tabarok.jpg";
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile }) {
@@ -311,17 +312,20 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                     </div>
                 )}
             </div>
-            <ConfirmDialog
-                open={showLogoutConfirm}
-                title="Keluar dari akun?"
-                message="Anda perlu login kembali untuk mengakses sistem."
-                confirmText="Ya, Keluar"
-                cancelText="Batal"
-                danger
-                processing={loggingOut}
-                onConfirm={handleLogout}
-                onCancel={() => setShowLogoutConfirm(false)}
-            />
+            {createPortal(
+                <ConfirmDialog
+                    open={showLogoutConfirm}
+                    title="Keluar dari akun?"
+                    message="Anda perlu login kembali untuk mengakses sistem."
+                    confirmText="Ya, Keluar"
+                    cancelText="Batal"
+                    danger
+                    processing={loggingOut}
+                    onConfirm={handleLogout}
+                    onCancel={() => setShowLogoutConfirm(false)}
+                />,
+                document.body
+            )}
         </aside>
     );
 }
