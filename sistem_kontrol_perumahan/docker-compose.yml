@@ -54,16 +54,19 @@ services:
     container_name: skp_node
     restart: unless-stopped
     working_dir: /var/www
+    tty: true            
+    stdin_open: true     
     ports:
       - "5173:5173"
     volumes:
       - ./:/var/www
-    command: tail -f /dev/null
+      - node_modules:/var/www/node_modules
     networks:
       - skp-network
 
 volumes:
   postgres_data:
+  node_modules:
 
 networks:
   skp-network:
