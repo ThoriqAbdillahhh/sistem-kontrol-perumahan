@@ -39,7 +39,7 @@ Route::middleware(['auth', 'role:Super Admin|Admin'])->group(function () {
         ->parameters(['material' => 'material']);
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'check.menu'])->group(function () {
     Route::get('/unit', [UnitController::class, 'index'])->name('unit.index');
     Route::post('/unit', [UnitController::class, 'store'])->name('unit.store');
     Route::put('/unit/{unit}', [UnitController::class, 'update'])->name('unit.update');
@@ -47,11 +47,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/unit/{unit}', [UnitController::class, 'destroy'])->name('unit.destroy');
 });
 
-Route::middleware(['auth', 'role:Super Admin|Admin|Admin Keuangan|Owner'])->group(function () {
+Route::middleware(['auth', 'role:Super Admin|Admin|Admin Keuangan|Owner', 'check.menu'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
-Route::middleware(['auth', 'role:Super Admin|Admin|Admin Keuangan'])->group(function () {
+Route::middleware(['auth', 'role:Super Admin|Admin|Admin Keuangan', 'check.menu'])->group(function () {
     Route::get('/log-gudang', [LogGudangController::class, 'index'])->name('gudang.index');
     Route::get('/log-gudang/history', [LogGudangController::class, 'history'])->name('log-gudang.history');
 });
@@ -65,13 +65,13 @@ Route::middleware(['auth', 'role:Super Admin|Admin'])->prefix('log-gudang')->nam
     Route::delete('/keluar/{logKeluar}', [LogGudangController::class, 'destroyKeluar'])->name('keluar.destroy');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'check.menu'])->group(function () {
     Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
     Route::post('/progress', [ProgressController::class, 'store'])->name('progress.store');
     // TODO: middleware role -> ->middleware('role:Admin|Super Admin')
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'check.menu'])->group(function () {
     Route::get('/standar', [StandarProgressController::class, 'index'])->name('standar.index');
     Route::post('/standar', [StandarProgressController::class, 'store'])->name('standar.store');
     Route::put('/standar/{matrix}', [StandarProgressController::class, 'update'])->name('standar.update');
@@ -89,9 +89,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/user-role/{user}', [UserRoleController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/toggle', [UserRoleController::class, 'toggleStatus'])->name('users.toggle');
     Route::delete('/user-role/{user}', [UserRoleController::class, 'destroy'])->name('users.destroy');
+    // Route untuk Super Admin mengatur menu override per user
+    Route::post('/user-role/{user}/menu-override', [UserRoleController::class, 'updateMenuOverride'])->name('users.menu-override.update');
 });
 
-Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->prefix('finance')->name('finance.')->group(function () {
+Route::middleware(['auth', 'role:Super Admin|Admin Keuangan', 'check.menu'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('spj-otomatis', [SpjController::class, 'index'])->name('spj-otomatis');
     Route::get('spj-otomatis/export', [SpjController::class, 'export'])->name('spj-otomatis.export');
 
@@ -119,4 +121,6 @@ Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->prefix('finance'
         ->name('hpp-per-unit');
 });
 
+
 require __DIR__.'/auth.php';
+
