@@ -188,11 +188,11 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                     />
                 </div>
 
-                <button
+               <button
                     type="button"
                     onClick={onToggle}
                     title={collapsed ? "Buka sidebar" : "Tutup sidebar"}
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-sidebar-foreground shadow-md transition-all duration-150 hover:bg-accent hover:text-accent-foreground hover:border-accent ${collapsed
+                    className={`hidden lg:flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-sidebar-foreground shadow-md transition-all duration-150 hover:bg-accent hover:text-accent-foreground hover:border-accent ${collapsed
                             ? "absolute -right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100"
                             : ""
                         }`}
