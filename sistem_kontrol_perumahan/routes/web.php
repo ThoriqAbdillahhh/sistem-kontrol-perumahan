@@ -93,6 +93,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth', 'role:Super Admin|Admin Keuangan'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('spj-otomatis', [SpjController::class, 'index'])->name('spj-otomatis');
+    Route::get('spj-otomatis/export', [SpjController::class, 'export'])->name('spj-otomatis.export');
 
     Route::get('kas-keluar', [KasKeluarController::class, 'index'])->name('kas-keluar');
     Route::post('kas-keluar', [KasKeluarController::class, 'store'])->name('kas-keluar.store');
