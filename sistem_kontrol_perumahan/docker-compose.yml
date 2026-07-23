@@ -1,0 +1,73 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .docker/php/Dockerfile
+    container_name: skp_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - skp-network
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: skp_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./.docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - skp-network
+
+  postgres:
+    image: postgres:16-alpine  # <-- Ganti 18 jadi 16 (versi LTS paling stabil)
+    container_name: skp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sistem_kontrol_perumahan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: demadmin123
+    ports:
+      - "5433:5432"            # <-- Ubah port kiri jadi 5433 (biar gak bentrok kalau Windows/WSL ada postgres lain)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - skp-network
+
+  node:
+    image: node:22-alpine
+    container_name: skp_node
+    restart: unless-stopped
+    working_dir: /var/www
+    tty: true            
+    stdin_open: true     
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/var/www
+      - node_modules:/var/www/node_modules
+    networks:
+      - skp-network
+
+volumes:
+  postgres_data:
+  node_modules:
+
+networks:
+  skp-network:
+    driver: bridge

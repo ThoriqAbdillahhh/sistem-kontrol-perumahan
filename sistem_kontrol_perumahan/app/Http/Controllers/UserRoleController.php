@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserMenuOverride;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -13,19 +14,23 @@ class UserRoleController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::with('roles')->orderBy('name')->get()->map(fn ($u) => [
-            'id'        => $u->id,
-            'nama'      => $u->name,
-            'username'  => $u->username,
-            'email'     => $u->email,
-            'role'      => $u->roles->pluck('name')->first() ?? '-',
-            'isActive'  => (bool) $u->is_active,
-            'lastLogin' => $u->last_login_at?->format('d M Y \\· H:i') ?? '—',
+        $users = User::with(['roles', 'menuOverrides'])->orderBy('name')->get()->map(fn ($u) => [
+            'id'            => $u->id,
+            'nama'          => $u->name,
+            'username'      => $u->username,
+            'email'         => $u->email,
+            'role'          => $u->roles->pluck('name')->first() ?? '-',
+            'isActive'      => (bool) $u->is_active,
+            'lastLogin'     => $u->last_login_at?->format('d M Y \\· H:i') ?? '—',
+            'menuOverrides' => $u->menuOverrides->map(fn ($o) => [
+                'menu_key' => $o->menu_key,
+                'visible'  => $o->visible,
+            ])->values()->toArray(),
         ]);
 
         return Inertia::render('UserRole/Index', [
-            'users' => $users,
-            'roles' => Role::pluck('name'),
+            'users'      => $users,
+            'roles'      => Role::pluck('name'),
             'authUserId' => $request->user()->id,
         ]);
     }
@@ -115,6 +120,33 @@ class UserRoleController extends Controller
         }
 
         $user->delete();
+        return back();
+    }
+
+    /**
+     * Simpan override visibilitas menu untuk user tertentu.
+     * Payload: { overrides: [{ menu_key: string, visible: bool }] }
+     */
+    public function updateMenuOverride(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'overrides'            => ['required', 'array'],
+            'overrides.*.menu_key' => ['required', 'string', 'max:100'],
+            'overrides.*.visible'  => ['required', 'boolean'],
+        ]);
+
+        // Hapus semua override lama, ganti dengan yang baru
+        $user->menuOverrides()->delete();
+
+        foreach ($data['overrides'] as $override) {
+            // Hanya simpan yang benar-benar menjadi override (bukan "default")
+            UserMenuOverride::create([
+                'user_id'  => $user->id,
+                'menu_key' => $override['menu_key'],
+                'visible'  => $override['visible'],
+            ]);
+        }
+
         return back();
     }
 }

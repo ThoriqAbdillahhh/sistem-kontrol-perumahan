@@ -62,3 +62,8 @@
 .scrollbar-hide::-webkit-scrollbar {
     display: none;             /* Chrome, Safari, Edge modern */
 }
+
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+    cursor: pointer;
+}
