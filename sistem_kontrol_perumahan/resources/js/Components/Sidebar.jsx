@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import RoleBadge from "@/Components/RoleBadge";
 import ConfirmDialog from "@/Components/ConfirmDialog";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import logo from "@/assets/tabarok.jpg";
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile }) {
@@ -21,6 +22,18 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
     const role = auth.user.roles?.[0] ?? "";
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
+    const [showAccountMenu, setShowAccountMenu] = useState(false);
+    const accountMenuRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (accountMenuRef.current && !accountMenuRef.current.contains(e.target)) {
+                setShowAccountMenu(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Buat map dari menuOverrides: { menu_key: boolean }
     const overridesMap = Object.fromEntries(
@@ -175,11 +188,11 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                     />
                 </div>
 
-                <button
+               <button
                     type="button"
                     onClick={onToggle}
                     title={collapsed ? "Buka sidebar" : "Tutup sidebar"}
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-sidebar-foreground shadow-md transition-all duration-150 hover:bg-accent hover:text-accent-foreground hover:border-accent ${collapsed
+                    className={`hidden lg:flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-sidebar-foreground shadow-md transition-all duration-150 hover:bg-accent hover:text-accent-foreground hover:border-accent ${collapsed
                             ? "absolute -right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100"
                             : ""
                         }`}
@@ -247,9 +260,13 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                 )}
             </nav>
 
-            <div className="mt-auto border-t border-sidebar-border p-4">
+           <div className="relative mt-auto border-t border-sidebar-border p-4" ref={accountMenuRef}>
                 <div className="flex items-center justify-between rounded-xl bg-sidebar-accent/60 px-3 py-2.5">
-                    <div className="flex items-center gap-2.5">
+                    <button
+                        type="button"
+                        onClick={() => collapsed && setShowAccountMenu((v) => !v)}
+                        className={`flex items-center gap-2.5 ${collapsed ? "cursor-pointer" : ""}`}
+                    >
                         <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">
                             {initials}
                         </div>
@@ -260,7 +277,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                                 </p>
                             </div>
                         )}
-                    </div>
+                    </button>
 
                     {!collapsed && (
                         <button
@@ -273,18 +290,42 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                         </button>
                     )}
                 </div>
+
+                {collapsed && showAccountMenu && (
+                    <div className="absolute bottom-full left-4 z-50 mb-2 w-44 overflow-hidden rounded-xl border border-sidebar-border bg-sidebar shadow-xl">
+                        <div className="border-b border-sidebar-border px-3 py-2">
+                            <p className="truncate text-xs font-semibold text-white">
+                                {auth.user.name}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowAccountMenu(false);
+                                setShowLogoutConfirm(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-sidebar-foreground/80 hover:bg-red-500/20 hover:text-red-300"
+                        >
+                            <LogOut size={14} />
+                            Keluar
+                        </button>
+                    </div>
+                )}
             </div>
-            <ConfirmDialog
-                open={showLogoutConfirm}
-                title="Keluar dari akun?"
-                message="Anda perlu login kembali untuk mengakses sistem."
-                confirmText="Ya, Keluar"
-                cancelText="Batal"
-                danger
-                processing={loggingOut}
-                onConfirm={handleLogout}
-                onCancel={() => setShowLogoutConfirm(false)}
-            />
+            {createPortal(
+                <ConfirmDialog
+                    open={showLogoutConfirm}
+                    title="Keluar dari akun?"
+                    message="Anda perlu login kembali untuk mengakses sistem."
+                    confirmText="Ya, Keluar"
+                    cancelText="Batal"
+                    danger
+                    processing={loggingOut}
+                    onConfirm={handleLogout}
+                    onCancel={() => setShowLogoutConfirm(false)}
+                />,
+                document.body
+            )}
         </aside>
     );
 }
