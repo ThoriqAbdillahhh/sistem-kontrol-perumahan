@@ -111,7 +111,7 @@ private function dataOperasional(): array
         return [$unit->id => $rows];
     });
 
-    $rows = $units->map(function ($u) use ($computeStatusMaterial) {
+    $rows = $units->map(function (Unit $u) use ($computeStatusMaterial) {
         $progress = (int) ($u->latestProgress?->progress_percent ?? 0);
 
         return [
@@ -220,6 +220,10 @@ private function dataKeuangan(): array
         ])
         ->all();
 
+    $totalMaterialKeluar = LogKeluarHarian::query()->sum('total');
+    $sisaMaterialKeluar = collect($this->stokService->getStokGudang())
+        ->sum(fn ($item) => (float) ($item['nilai_rupiah'] ?? 0));
+
     return [
         'kpiKeuangan' => [
             'pengeluaranBulanIni' => (float) $pengeluaranBulanIni,
@@ -229,6 +233,8 @@ private function dataKeuangan(): array
             'totalPengeluaran'    => (float) $pengeluaranBulanIni,
             'saldoKas'            => (float) $saldoBulanIni,
             'nilaiMaterialMasuk'  => (float) $penerimaanBulanIni,
+            'totalMaterialKeluar' => (float) $totalMaterialKeluar,
+            'sisaMaterialKeluar'  => (float) $sisaMaterialKeluar,
             'periodeMinggu'       => $periodeMinggu,
         ],
         'cashflowWeekly' => $cashflowWeekly,
