@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -35,5 +36,20 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    public function menuOverrides(): HasMany
+    {
+        return $this->hasMany(UserMenuOverride::class);
+    }
+
+    /**
+     * Kembalikan peta override dalam format ['menu_key' => true/false]
+     */
+    public function getMenuOverridesMap(): array
+    {
+        return $this->menuOverrides
+            ->pluck('visible', 'menu_key')
+            ->toArray();
     }
 }

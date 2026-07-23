@@ -22,6 +22,11 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
 
+    // Buat map dari menuOverrides: { menu_key: boolean }
+    const overridesMap = Object.fromEntries(
+        (auth.user.menuOverrides ?? []).map(({ menu_key, visible }) => [menu_key, visible])
+    );
+
     const handleLogout = () => {
         setLoggingOut(true);
         router.post(
@@ -35,36 +40,42 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
 
     const menus = [
         {
+            key: "dashboard",
             title: "Dashboard",
             route: "dashboard",
             icon: Home,
             roles: ["Super Admin", "Admin", "Owner", "Admin Keuangan"],
         },
         {
+            key: "unit.index",
             title: "Mengelola Unit",
             route: "unit.index",
             icon: Building2,
             roles: ["Super Admin", "Admin"],
         },
         {
+            key: "gudang.index",
             title: "Log Gudang",
             route: "gudang.index",
             icon: Boxes,
             roles: ["Super Admin", "Admin"],
         },
         {
+            key: "progress.index",
             title: "Update Progress",
             route: "progress.index",
             icon: TrendingUp,
             roles: ["Super Admin", "Admin"],
         },
         {
+            key: "standar.index",
             title: "Standar Progress",
             route: "standar.index",
             icon: ClipboardList,
             roles: ["Super Admin", "Admin"],
         },
         {
+            key: "material.index",
             title: "Master Material",
             route: "material.index",
             href: route("material.index"),
@@ -72,6 +83,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
             roles: ["Super Admin", "Admin"],
         },
         {
+            key: "users.index",
             title: "User & Role",
             route: "users.index",
             icon: Users,
@@ -81,42 +93,49 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
 
     const financeMenus = [
         {
+            key: "finance.kartu-material-unit",
             title: "Kartu Material Unit",
             route: "finance.kartu-material-unit",
             icon: ClipboardList,
             roles: ["Super Admin", "Admin"],
         },
         {
+            key: "finance.hpp-per-unit",
             title: "HPP per Unit",
             route: "finance.hpp-per-unit",
             icon: Database,
             roles: ["Super Admin", "Admin Keuangan"],
         },
         {
+            key: "gudang.index",
             title: "Log Masuk & Keluar",
             route: "gudang.index",
             icon: Boxes,
             roles: ["Admin Keuangan"],
         },
         {
+            key: "finance.akun-referensi",
             title: "Akun Referensi",
             route: "finance.akun-referensi",
             icon: Users,
             roles: ["Super Admin", "Admin Keuangan"],
         },
         {
+            key: "finance.kas-masuk",
             title: "Kas Masuk",
             route: "finance.kas-masuk",
             icon: Home,
             roles: ["Super Admin", "Admin Keuangan"],
         },
         {
+            key: "finance.kas-keluar",
             title: "Kas Keluar",
             route: "finance.kas-keluar",
             icon: Home,
             roles: ["Super Admin", "Admin Keuangan"],
         },
         {
+            key: "finance.spj-otomatis",
             title: "SPJ Otomatis",
             route: "finance.spj-otomatis",
             icon: TrendingUp,
@@ -124,8 +143,19 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
         },
     ];
 
-    const mainMenuItems = menus.filter((menu) => menu.roles.includes(role));
-    const financeMenuItems = financeMenus.filter((menu) => menu.roles.includes(role));
+    const mainMenuItems = menus.filter((menu) => {
+        const override = overridesMap[menu.key];
+        if (override === true) return true;   // paksa tampil
+        if (override === false) return false; // paksa sembunyikan
+        return menu.roles.includes(role);     // default dari role
+    });
+
+    const financeMenuItems = financeMenus.filter((menu) => {
+        const override = overridesMap[menu.key];
+        if (override === true) return true;
+        if (override === false) return false;
+        return menu.roles.includes(role);
+    });
 
     const initials = auth.user.name
         .split(" ")
