@@ -23,4 +23,15 @@ export default defineConfig({
         },
         extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
     },
+    // --- Tambahkan blok server ini agar Docker HMR berjalan lancar ---
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: 'localhost',
+        },
+        watch: {
+            usePolling: true, // Diperlukan agar Vite mendeteksi perubahans file dari host OS ke container
+        },
+    },
 });
