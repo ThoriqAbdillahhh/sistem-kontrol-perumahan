@@ -29,7 +29,7 @@ services:
       - skp-network
 
   postgres:
-    image: postgres:16-alpine  # <-- Ganti 18 jadi 16 (versi LTS paling stabil)
+    image: postgres:16-alpine 
     container_name: skp_postgres
     restart: unless-stopped
     environment:
@@ -37,7 +37,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: demadmin123
     ports:
-      - "5433:5432"            # <-- Ubah port kiri jadi 5433 (biar gak bentrok kalau Windows/WSL ada postgres lain)
+      - "5433:5432"            
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
