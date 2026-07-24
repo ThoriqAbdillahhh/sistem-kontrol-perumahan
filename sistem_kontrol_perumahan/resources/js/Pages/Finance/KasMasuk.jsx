@@ -9,13 +9,13 @@ function formatRupiah(value) {
 // tambahan baru:
 function formatRibuan(value) {
     if (value === "" || value === null || value === undefined) return "";
-    const angka = String(value).replace(/\D/g, ""); // buang semua kecuali digit
+    const angka = String(value).replace(/\D/g, ""); 
     if (angka === "") return "";
     return new Intl.NumberFormat("id-ID").format(Number(angka));
 }
 
 function parseRibuan(value) {
-    return value.replace(/\D/g, ""); // sisain digit doang, hasilnya string angka mentah
+    return value.replace(/\D/g, "");
 }
 
 export default function KasMasuk({ kasMasuk = [], totalBulanIni = 0, akunOptions = [] }) {
