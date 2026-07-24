@@ -9,8 +9,10 @@ import {
     KeyRound,
     ShieldCheck,
     Eye,
+    LayoutGrid,
 } from "lucide-react";
 import UserFormModal from "@/Components/UserFormModal";
+import MenuOverrideModal from "@/Components/MenuOverrideModal";
 
 function initials(name) {
     return name
@@ -97,6 +99,7 @@ export default function Index({ users, roles }) {
     const [selectedUser, setSelectedUser] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [menuOverrideTarget, setMenuOverrideTarget] = useState(null);
 
     const openCreate = () => {
         setModalMode("create");
@@ -232,6 +235,18 @@ export default function Index({ users, roles }) {
                                                         <Pencil size={14} />
                                                     </span>
                                                 )}
+                                                {u.id !== currentUserId && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setMenuOverrideTarget(u)
+                                                        }
+                                                        title="Atur visibilitas menu"
+                                                        className="cursor-pointer flex h-8 w-8 items-center justify-center rounded-lg border border-border text-violet-600 hover:bg-violet-50"
+                                                    >
+                                                        <LayoutGrid size={14} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     type="button"
                                                     onClick={() =>
@@ -267,6 +282,12 @@ export default function Index({ users, roles }) {
                 user={selectedUser}
                 roles={roles}
                 onClose={() => setModalOpen(false)}
+            />
+
+            <MenuOverrideModal
+                open={!!menuOverrideTarget}
+                user={menuOverrideTarget}
+                onClose={() => setMenuOverrideTarget(null)}
             />
 
             <ConfirmDialog

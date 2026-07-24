@@ -17,6 +17,9 @@ function formatTanggal(tanggal) {
 export default function SpjOtomatis({ dokumen = [], summary = {} }) {
     const [search, setSearch] = useState("");
     const [filterJenis, setFilterJenis] = useState("Semua");
+    const now = new Date();
+    const [bulanExport, setBulanExport] = useState(now.getMonth() + 1);
+    const [tahunExport, setTahunExport] = useState(now.getFullYear());
 
     const filtered = useMemo(() => {
         return dokumen.filter((item) => {
@@ -43,9 +46,37 @@ export default function SpjOtomatis({ dokumen = [], summary = {} }) {
                             Surat pertanggungjawaban otomatis 
                         </p>
                     </div>
-                    <span className="rounded-full bg-secondary p x-4 py-1.5 text-xs font-medium text-muted-foreground">
-                        Read only
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <select
+                            className="rounded-xl border border-border px-3 py-2 text-sm"
+                            value={bulanExport}
+                            onChange={(e) => setBulanExport(Number(e.target.value))}
+                        >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((b) => (
+                                <option key={b} value={b}>
+                                    {new Date(2000, b - 1).toLocaleDateString("id-ID", { month: "long" })}
+                                </option>
+                            ))}
+                        </select>
+                    <select
+                            className="rounded-xl border border-border px-3 py-2 text-sm"
+                            value={tahunExport}
+                            onChange={(e) => setTahunExport(Number(e.target.value))}
+                        >
+                            {Array.from({ length: 5 }, (_, i) => now.getFullYear() - i).map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                            ))}
+                        </select>
+                        <a
+                            href={route("finance.spj-otomatis.export", {
+                                bulan: bulanExport,
+                                tahun: tahunExport,
+                            })}
+                            className="cursor-pointer rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                        >
+                            Download PDF
+                        </a>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

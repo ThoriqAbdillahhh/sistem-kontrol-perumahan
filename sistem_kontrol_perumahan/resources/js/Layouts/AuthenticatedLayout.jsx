@@ -1,7 +1,7 @@
 import { Link, usePage, router } from "@inertiajs/react";
 import Sidebar from "@/Components/Sidebar";
 import RoleBadge from "@/Components/RoleBadge";
-import { Bell, AlertTriangle, AlertCircle, CheckCheck } from "lucide-react";
+import { Bell, AlertTriangle, AlertCircle, CheckCheck, Menu } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 function timeAgo(dateString) {
@@ -93,9 +93,8 @@ function NotificationDropdown() {
                             <button
                                 key={log.id}
                                 onClick={() => markRead(log)}
-                                className={`flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-secondary/50 ${
-                                    !log.read_at ? "bg-sky-50/60" : ""
-                                }`}
+                                className={`flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-secondary/50 ${!log.read_at ? "bg-sky-50/60" : ""
+                                    }`}
                             >
                                 <span className="mt-0.5 shrink-0">
                                     <NotificationIcon action={log.action} />
@@ -122,6 +121,19 @@ function NotificationDropdown() {
 
 export default function AuthenticatedLayout({ children }) {
     const { auth } = usePage().props;
+    const [collapsed, setCollapsed] = useState(() => {
+        return localStorage.getItem("sidebar-collapsed") === "true";
+    });
+    const [mobileOpen, setMobileOpen] = useState(false);
+    
+
+    function toggleSidebar() {
+        setCollapsed((prev) => {
+            const next = !prev;
+            localStorage.setItem("sidebar-collapsed", String(next));
+            return next;
+        });
+    }
 
     const role = auth.user.roles?.[0] ?? "";
 
@@ -136,25 +148,46 @@ export default function AuthenticatedLayout({ children }) {
         role === "Owner"
             ? "Monitoring Eksekutif"
             : role === "Super Admin"
-              ? "Administrasi Sistem Penuh"
-              : "Operasional Gudang & Unit";
+                ? "Administrasi Sistem Penuh"
+                : "Operasional Gudang & Unit";
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <div className="grid min-h-screen lg:grid-cols-[288px_1fr]">
-                <div className="hidden lg:block">
-                    <Sidebar />
-                </div>
+           <div className="min-h-screen">
+                <Sidebar
+                    collapsed={collapsed}
+                    onToggle={toggleSidebar}
+                    mobileOpen={mobileOpen}
+                    onCloseMobile={() => setMobileOpen(false)}
+                />
 
-                <div className="flex min-w-0 flex-col">
-                    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-border bg-white/90 px-6 backdrop-blur">
-                        <div>
-                            <h1 className="text-base font-extrabold leading-tight">
-                                Estate Eficiency System
-                            </h1>
-                            <p className="text-[11px] text-muted-foreground">
-                                {subtitle}
-                            </p>
+                {mobileOpen && (
+                    <div
+                        className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+                        onClick={() => setMobileOpen(false)}
+                    />
+                )}
+
+               <div className={`flex min-h-screen min-w-0 flex-col transition-[margin-left] duration-200 ${collapsed ? "lg:ml-20" : "lg:ml-72"}`}>
+                  <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-border bg-white/90 px-4 backdrop-blur sm:px-6">
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setMobileOpen(true)}
+                                className="cursor-pointer text-foreground lg:hidden"
+                                title="Buka menu"
+                            >
+                                <Menu size={22} />
+                            </button>
+
+                            <div>
+                                <h1 className="text-base font-extrabold leading-tight">
+                                    Estate Eficiency System
+                                </h1>
+                                <p className="text-[11px] text-muted-foreground">
+                                    {subtitle}
+                                </p>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-4">

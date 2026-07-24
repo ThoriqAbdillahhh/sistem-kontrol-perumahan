@@ -8,9 +8,12 @@ use Illuminate\Support\Collection;
 
 class SpjService
 {
-    public function getDokumen(): Collection
+   public function getDokumen(?string $awal = null, ?string $akhir = null): Collection
     {
-        $kasMasuk = KasMasuk::with('akunReferensi')->get()->map(fn ($item) => [
+        $saldoAwal = $awal ? $this->getSaldoSebelum($awal) : 0.0;
+        $kasMasuk = KasMasuk::with('akunReferensi')
+            ->when($awal && $akhir, fn ($q) => $q->whereBetween('tanggal', [$awal, $akhir]))
+            ->get()->map(fn ($item) => [
             'tanggal' => $item->tanggal,
             'id' => $item->id,
             'jenis' => 'Penerimaan',
@@ -23,7 +26,9 @@ class SpjService
             'metode' => 'Transfer',
         ]);
 
-        $kasKeluar = KasKeluar::with('akunReferensi')->get()->map(fn ($item) => [
+       $kasKeluar = KasKeluar::with('akunReferensi')
+            ->when($awal && $akhir, fn ($q) => $q->whereBetween('tanggal', [$awal, $akhir]))
+            ->get()->map(fn ($item) => [
             'tanggal' => $item->tanggal,
             'id' => $item->id,
             'jenis' => 'Pengeluaran',
@@ -44,7 +49,7 @@ class SpjService
             })
             ->values();
 
-        $saldo = 0.0;
+        $saldo = $saldoAwal;
         $counter = [];
 
         return $merged->map(function ($item) use (&$saldo, &$counter) {
@@ -66,7 +71,15 @@ class SpjService
                 'metode' => $item['metode'],
                 'saldo' => $saldo,
             ];
-        })->values();
+       })->values();
+    }
+
+    public function getSaldoSebelum(string $tanggal): float
+    {
+        $totalMasuk = KasMasuk::where('tanggal', '<', $tanggal)->sum('nominal');
+        $totalKeluar = KasKeluar::where('tanggal', '<', $tanggal)->sum('total');
+
+        return (float) $totalMasuk - (float) $totalKeluar;
     }
 
     public function getSummary(Collection $dokumen): array

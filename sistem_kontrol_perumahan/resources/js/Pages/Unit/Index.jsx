@@ -221,26 +221,26 @@ export default function UnitIndex({ units }) {
             <Head title="Mengelola Unit" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="mb-5">
                         <h1 className="text-xl font-bold text-slate-900">Mengelola Unit</h1>
                     </div>
 
                     {/* Tabel */}
                     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+                       <div className="flex flex-col gap-3 p-4">
                             <h2 className="text-sm font-bold text-slate-900">
                                 Daftar Unit ({filteredUnits.length})
                             </h2>
-                            <div className="flex gap-2">
-                                <div className="relative">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="relative flex-1 min-w-[160px]">
                                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
                                         type="text"
                                         placeholder="Cari unit, zona, tukang..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="w-56 rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-sky-600"
+                                        className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-sky-600"
                                     />
                                 </div>
 

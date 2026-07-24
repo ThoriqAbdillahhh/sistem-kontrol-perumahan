@@ -42,6 +42,16 @@ class HandleInertiaRequests extends Middleware
 
                             // Role dari Spatie
                             'roles' => $request->user()->getRoleNames()->toArray(),
+
+                            // Override visibilitas menu per user (dari Super Admin)
+                            'menuOverrides' => $request->user()
+                                ->menuOverrides
+                                ->map(fn ($o) => [
+                                    'menu_key' => $o->menu_key,
+                                    'visible'  => $o->visible,
+                                ])
+                                ->values()
+                                ->toArray(),
                         ]
                         : null,
                 ],
