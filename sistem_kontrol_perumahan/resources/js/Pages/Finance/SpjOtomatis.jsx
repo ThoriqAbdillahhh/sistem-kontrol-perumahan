@@ -43,7 +43,7 @@ export default function SpjOtomatis({ dokumen = [], summary = {} }) {
                     <div>
                         <h1 className="text-2xl font-bold">SPJ Otomatis</h1>
                         <p className="text-sm text-muted-foreground">
-                            Surat pertanggungjawaban dibuat otomatis dari setiap transaksi kas masuk dan keluar
+                            Surat pertanggungjawaban otomatis 
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -58,7 +58,7 @@ export default function SpjOtomatis({ dokumen = [], summary = {} }) {
                                 </option>
                             ))}
                         </select>
-                       <select
+                    <select
                             className="rounded-xl border border-border px-3 py-2 text-sm"
                             value={tahunExport}
                             onChange={(e) => setTahunExport(Number(e.target.value))}
@@ -97,7 +97,7 @@ export default function SpjOtomatis({ dokumen = [], summary = {} }) {
                         <p className="mt-2 text-2xl font-bold">
                             {formatRupiah(summary.total_nilai_pengeluaran)}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">Akumulasi kas keluar</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Total kas keluar</p>
                     </div>
 
                     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -107,7 +107,7 @@ export default function SpjOtomatis({ dokumen = [], summary = {} }) {
                         <p className="mt-2 text-2xl font-bold">
                             {formatRupiah(summary.total_nilai_penerimaan)}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">Akumulasi kas masuk</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Total kas masuk</p>
                     </div>
 
                     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -115,7 +115,7 @@ export default function SpjOtomatis({ dokumen = [], summary = {} }) {
                             Selisih / saldo
                         </p>
                         <p className="mt-2 text-2xl font-bold">{formatRupiah(summary.saldo_akhir)}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Penerimaan dikurangi pengeluaran</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Saldo</p>
                     </div>
                 </div>
 
@@ -203,7 +203,7 @@ export default function SpjOtomatis({ dokumen = [], summary = {} }) {
 
                     <div className="flex items-center justify-between border-t border-border p-4 text-xs text-muted-foreground">
                         <span>Menampilkan {filtered.length} dari {dokumen.length} dokumen</span>
-                        <span>Diperbarui otomatis saat ada transaksi baru</span>
+                        <span>Diperbarui otomatis </span>
                     </div>
                 </div>
             </div>

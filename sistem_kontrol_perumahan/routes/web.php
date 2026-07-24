@@ -17,6 +17,12 @@ use App\Http\Controllers\KartuMaterialUnitController;
 use App\Http\Controllers\KasMasukController;
 use App\Http\Controllers\KasKeluarController;
 use App\Http\Controllers\SpjController;
+use App\Http\Controllers\NotificationController;
+
+Route::middleware('auth')->group(function () {
+    Route::post('/notifications/{activityLog}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.readAll');
+});
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [

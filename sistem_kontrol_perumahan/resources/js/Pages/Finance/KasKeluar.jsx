@@ -9,13 +9,13 @@ function formatRupiah(value) {
 
 function formatRibuan(value) {
     if (value === "" || value === null || value === undefined) return "";
-    const angka = String(value).replace(/\D/g, ""); // buang semua kecuali digit
+    const angka = String(value).replace(/\D/g, ""); 
     if (angka === "") return "";
     return new Intl.NumberFormat("id-ID").format(Number(angka));
 }
 
 function parseRibuan(value) {
-    return value.replace(/\D/g, ""); // sisain digit doang, hasilnya string angka mentah
+    return value.replace(/\D/g, "");
 }
 export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
     const [showForm, setShowForm] = useState(false);
@@ -38,7 +38,7 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
     function submit(e) {
         e.preventDefault();
         post(route("finance.kas-keluar.store"), {
-            forceFormData: true, // wajib karena ada file upload
+            forceFormData: true, 
             onSuccess: () => {
                 reset();
                 setShowForm(false);
@@ -60,7 +60,8 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                     <div>
                         <h1 className="text-2xl font-bold">Kas Keluar</h1>
                         <p className="text-sm text-muted-foreground">
-                            Jurnal pengeluaran proyek selain pembelian material gudang
+                            Jurnal pengeluaran proyek selain pembelian material
+                            gudang
                         </p>
                     </div>
                 </div>
@@ -93,9 +94,14 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                             </thead>
                             <tbody>
                                 {kasKeluar.map((item) => (
-                                    <tr key={item.id} className="border-b border-border last:border-0">
+                                    <tr
+                                        key={item.id}
+                                        className="border-b border-border last:border-0"
+                                    >
                                         <td className="px-6 py-4">
-                                            {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                                            {new Date(
+                                                item.tanggal,
+                                            ).toLocaleDateString("id-ID", {
                                                 day: "2-digit",
                                                 month: "long",
                                                 year: "numeric",
@@ -104,12 +110,26 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                                         <td className="px-6 py-4 font-medium">
                                             {item.akun_referensi?.nama_akun}
                                         </td>
-                                        <td className="px-6 py-4 text-primary">{item.unit || "-"}</td>
-                                        <td className="px-6 py-4 text-muted-foreground">{item.keterangan}</td>
-                                        <td className="px-6 py-4">{item.qty}</td>
-                                        <td className="px-6 py-4">{item.satuan}</td>
-                                        <td className="px-6 py-4">{formatRupiah(item.nominal_per_unit)}</td>
-                                        <td className="px-6 py-4 font-semibold">{formatRupiah(item.total)}</td>
+                                        <td className="px-6 py-4 text-primary">
+                                            {item.unit || "-"}
+                                        </td>
+                                        <td className="px-6 py-4 text-muted-foreground">
+                                            {item.keterangan}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {Math.round(Number(item.qty))}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {item.satuan}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {formatRupiah(
+                                                item.nominal_per_unit,
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 font-semibold">
+                                            {formatRupiah(item.total)}
+                                        </td>
                                         <td className="px-6 py-4">
                                             {item.lampiran_url ? (
                                                 <a
@@ -128,7 +148,10 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                                 ))}
                                 {kasKeluar.length === 0 && (
                                     <tr>
-                                        <td colSpan={9} className="px-6 py-8 text-center text-muted-foreground">
+                                        <td
+                                            colSpan={9}
+                                            className="px-6 py-8 text-center text-muted-foreground"
+                                        >
                                             Belum ada jurnal kas keluar.
                                         </td>
                                     </tr>
@@ -152,34 +175,57 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                     <div className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-lg">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-lg font-bold">Catat Kas Keluar</h2>
+                                <h2 className="text-lg font-bold">
+                                    Catat Kas Keluar
+                                </h2>
                                 <p className="text-xs text-muted-foreground">
                                     SPJ dibuat otomatis saat disimpan.
                                 </p>
                             </div>
-                            <button onClick={closeForm} className="cursor-pointer text-muted-foreground">
+                            <button
+                                onClick={closeForm}
+                                className="cursor-pointer text-muted-foreground"
+                            >
                                 ✕
                             </button>
                         </div>
 
-                        <form onSubmit={submit} className="mt-4 grid grid-cols-2 gap-4">
+                        <form
+                            onSubmit={submit}
+                            className="mt-4 grid grid-cols-2 gap-4"
+                        >
                             <div>
-                                <label className="text-sm font-medium">Tanggal</label>
+                                <label className="text-sm font-medium">
+                                    Tanggal
+                                </label>
                                 <input
                                     type="date"
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.tanggal}
-                                    onChange={(e) => setData("tanggal", e.target.value)}
+                                    onChange={(e) =>
+                                        setData("tanggal", e.target.value)
+                                    }
                                 />
-                                {errors.tanggal && <p className="text-xs text-red-500">{errors.tanggal}</p>}
+                                {errors.tanggal && (
+                                    <p className="text-xs text-red-500">
+                                        {errors.tanggal}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Nama Akun</label>
+                                <label className="text-sm font-medium">
+                                    Nama Akun
+                                </label>
                                 <select
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.akun_referensi_id}
-                                    onChange={(e) => setData("akun_referensi_id", e.target.value)}
+                                    onChange={(e) =>
+                                        setData(
+                                            "akun_referensi_id",
+                                            e.target.value,
+                                        )
+                                    }
                                 >
                                     <option value="">Pilih akun</option>
                                     {akunOptions.map((akun) => (
@@ -189,80 +235,134 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                                     ))}
                                 </select>
                                 {errors.akun_referensi_id && (
-                                    <p className="text-xs text-red-500">{errors.akun_referensi_id}</p>
+                                    <p className="text-xs text-red-500">
+                                        {errors.akun_referensi_id}
+                                    </p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Unit (opsional)</label>
+                                <label className="text-sm font-medium">
+                                    Unit (opsional)
+                                </label>
                                 <input
                                     type="text"
                                     placeholder="A1 / Infrastruktur"
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.unit}
-                                    onChange={(e) => setData("unit", e.target.value)}
+                                    onChange={(e) =>
+                                        setData("unit", e.target.value)
+                                    }
                                 />
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Keterangan</label>
+                                <label className="text-sm font-medium">
+                                    Keterangan
+                                </label>
                                 <input
                                     type="text"
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.keterangan}
-                                    onChange={(e) => setData("keterangan", e.target.value)}
+                                    onChange={(e) =>
+                                        setData("keterangan", e.target.value)
+                                    }
                                 />
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Qty</label>
+                                <label className="text-sm font-medium">
+                                    Qty
+                                </label>
                                 <input
                                     type="number"
-                                    step="0.01"
+                                    step="1"
+                                    min="1"
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.qty}
-                                    onChange={(e) => setData("qty", e.target.value)}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        
+                                        setData(
+                                            "qty",
+                                            v === ""
+                                                ? ""
+                                                : String(parseInt(v, 10) || ""),
+                                        );
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (
+                                            [".", ",", "-", "e", "E"].includes(
+                                                e.key,
+                                            )
+                                        ) {
+                                            e.preventDefault();
+                                        }
+                                    }}
                                 />
-                                {errors.qty && <p className="text-xs text-red-500">{errors.qty}</p>}
+                                {errors.qty && (
+                                    <p className="text-xs text-red-500">
+                                        {errors.qty}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Satuan</label>
+                                <label className="text-sm font-medium">
+                                    Satuan
+                                </label>
                                 <input
                                     type="text"
                                     placeholder="OH, Liter, dll"
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.satuan}
-                                    onChange={(e) => setData("satuan", e.target.value)}
+                                    onChange={(e) =>
+                                        setData("satuan", e.target.value)
+                                    }
                                 />
                             </div>
 
                             <div>
-    <label className="text-sm font-medium">Nominal / unit</label>
-    <div className="relative mt-1">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-            Rp
-        </span>
-        <input
-            type="text"
-            inputMode="numeric"
-            placeholder="0"
-            className="w-full rounded-xl border border-border py-2 pl-9 pr-3"
-            value={formatRibuan(data.nominal_per_unit)}
-            onChange={(e) => setData("nominal_per_unit", parseRibuan(e.target.value))}
-        />
-    </div>
-    {errors.nominal_per_unit && (
-        <p className="text-xs text-red-500">{errors.nominal_per_unit}</p>
-    )}
-</div>
+                                <label className="text-sm font-medium">
+                                    Nominal / unit
+                                </label>
+                                <div className="relative mt-1">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                                        Rp
+                                    </span>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="0"
+                                        className="w-full rounded-xl border border-border py-2 pl-9 pr-3"
+                                        value={formatRibuan(
+                                            data.nominal_per_unit,
+                                        )}
+                                        onChange={(e) =>
+                                            setData(
+                                                "nominal_per_unit",
+                                                parseRibuan(e.target.value),
+                                            )
+                                        }
+                                    />
+                                </div>
+                                {errors.nominal_per_unit && (
+                                    <p className="text-xs text-red-500">
+                                        {errors.nominal_per_unit}
+                                    </p>
+                                )}
+                            </div>
 
                             <div>
-                                <label className="text-sm font-medium">Metode Bayar</label>
+                                <label className="text-sm font-medium">
+                                    Metode Bayar
+                                </label>
                                 <select
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.metode_bayar}
-                                    onChange={(e) => setData("metode_bayar", e.target.value)}
+                                    onChange={(e) =>
+                                        setData("metode_bayar", e.target.value)
+                                    }
                                 >
                                     <option value="transfer">Transfer</option>
                                     <option value="tunai">Tunai</option>
@@ -270,29 +370,46 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                             </div>
 
                             <div className="col-span-2">
-                                <label className="text-sm font-medium">Penerima</label>
+                                <label className="text-sm font-medium">
+                                    Penerima
+                                </label>
                                 <input
                                     type="text"
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
                                     value={data.penerima}
-                                    onChange={(e) => setData("penerima", e.target.value)}
+                                    onChange={(e) =>
+                                        setData("penerima", e.target.value)
+                                    }
                                 />
                             </div>
 
                             <div className="col-span-2">
-                                <label className="text-sm font-medium">Lampiran No Bukti (opsional, maks 10MB)</label>
+                                <label className="text-sm font-medium">
+                                    Lampiran No Bukti (opsional, maks 10MB)
+                                </label>
                                 <input
                                     type="file"
                                     accept=".jpg,.jpeg,.png,.pdf"
                                     className="mt-1 w-full rounded-xl border border-border px-3 py-2"
-                                    onChange={(e) => setData("lampiran", e.target.files[0] ?? null)}
+                                    onChange={(e) =>
+                                        setData(
+                                            "lampiran",
+                                            e.target.files[0] ?? null,
+                                        )
+                                    }
                                 />
-                                {errors.lampiran && <p className="text-xs text-red-500">{errors.lampiran}</p>}
+                                {errors.lampiran && (
+                                    <p className="text-xs text-red-500">
+                                        {errors.lampiran}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="col-span-2 rounded-xl bg-secondary/50 p-3 text-sm">
                                 Total:{" "}
-                                <span className="font-semibold">{formatRupiah(total)}</span>
+                                <span className="font-semibold">
+                                    {formatRupiah(total)}
+                                </span>
                             </div>
 
                             <div className="col-span-2 flex justify-end gap-2">

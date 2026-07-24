@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProgressUnitRequest;
 use App\Models\ProgressUnit;
 use App\Models\Unit;
+use App\Traits\LogsActivity;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -12,6 +13,8 @@ use App\Services\MaterialConsumptionService;
 
 class ProgressController extends Controller
 {
+    use LogsActivity;
+
     public function __construct(protected MaterialConsumptionService $consumptionService)
     {
     }
@@ -43,27 +46,48 @@ class ProgressController extends Controller
         ]);
     }
 
-    public function store(StoreProgressUnitRequest $request)
+public function store(StoreProgressUnitRequest $request)
     {
         $unit = Unit::findOrFail($request->validated('unit_id'));
         $hasil = $this->consumptionService->evaluasiUnit($unit, (float) $request->validated('progress_percent'));
 
         DB::transaction(function () use ($request, $unit, $hasil) {
-            ProgressUnit::create([
+            $progress = ProgressUnit::create([
                 ...$request->validated(),
                 'updated_by'       => Auth::id(),
                 'status_material'  => strtoupper($hasil['status']),
                 'detail_material'  => $hasil['detail'],
             ]);
 
-            // Begitu ada input progress, unit otomatis dianggap Aktif —
-            // hanya diubah kalau statusnya sekarang bukan sudah Aktif,
-            // supaya tidak menimpa status lain (misal Selesai) tanpa alasan.
             if ($unit->status !== 'Aktif') {
                 $unit->update(['status' => 'Aktif']);
             }
+
+            $this->notifikasiJikaBermasalah($unit, $hasil, $progress);
         });
 
         return back()->with('success', 'Progress unit berhasil diperbarui.');
+    }
+
+    private function notifikasiJikaBermasalah(Unit $unit, array $hasil, ProgressUnit $progress): void
+    {
+        $status = strtoupper($hasil['status']);
+
+        if ($status !== 'WARNING' && $status !== 'BOROS') {
+            return;
+        }
+
+        // Ambil nama-nama material yang statusnya bukan Aman, buat isi deskripsi
+        $materialBermasalah = collect($hasil['detail'])
+            ->filter(fn ($d) => strtoupper($d['status']) !== 'AMAN')
+            ->pluck('material')
+            ->implode(', ');
+
+        $this->logActivity(
+            module: 'progress',
+            action: strtolower($status), // 'warning' atau 'boros', dipakai NotificationIcon di frontend
+            description: "Unit {$unit->nama_unit}: pemakaian material {$status} pada {$materialBermasalah}",
+            subject: $progress,
+        );
     }
 }
