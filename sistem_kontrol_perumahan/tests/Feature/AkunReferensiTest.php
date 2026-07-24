@@ -31,12 +31,13 @@ class AkunReferensiTest extends TestCase
             ->delete(route('finance.akun-referensi.destroy', ['akunReferensi' => $akun->id]))
             ->assertRedirect();
 
-        $this->actingAs($user)
-            ->get(route('finance.akun-referensi'))
-            ->assertOk()
+        $response = $this->actingAs($user)
+            ->get(route('finance.akun-referensi'));
+
+       $response->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('component', 'AkunReferensi/Index')
-                ->where('props.akunList', fn ($akunList) => collect($akunList)->doesntContain(fn ($item) => $item['id'] === $akun->id))
+                ->component('AkunReferensi/Index')
+                ->where('akunList', fn ($akunList) => collect($akunList)->doesntContain(fn ($item) => $item['id'] === $akun->id))
             );
     }
 }

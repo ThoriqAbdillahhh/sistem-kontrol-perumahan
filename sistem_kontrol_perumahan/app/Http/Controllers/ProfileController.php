@@ -50,8 +50,7 @@ public function update(ProfileUpdateRequest $request): RedirectResponse
     }
 
     $user->save();
-
-    return back()->with('success', 'Profil berhasil diperbarui.');
+    return Redirect::route('profile')->with('success', 'Profil berhasil diperbarui.');
 }
 
     /**
