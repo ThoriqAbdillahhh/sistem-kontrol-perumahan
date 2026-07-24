@@ -117,7 +117,7 @@ export default function KasKeluar({ kasKeluar = [], akunOptions = [] }) {
                                             {item.keterangan}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {item.qty}
+                                            {Math.round(Number(item.qty))}
                                         </td>
                                         <td className="px-6 py-4">
                                             {item.satuan}
